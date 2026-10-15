@@ -26,6 +26,19 @@ async function tabId(role) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// The bot works in its own Chrome window, created without focus, so it never pulls you away from
+// the tab you are using. Its tabs switch only inside that window.
+async function botWindow() {
+  const { botWin } = await chrome.storage.session.get('botWin');
+  if (botWin) {
+    const w = await chrome.windows.get(botWin).catch(() => null);
+    if (w) return w.id;
+  }
+  const w = await chrome.windows.create({ url: 'https://www.linkedin.com/sales/home', focused: false, state: 'normal', width: 1280, height: 900 });
+  await chrome.storage.session.set({ botWin: w.id });
+  return w.id;
+}
 const isLinkedIn = (url = '') => /^https:\/\/(www\.)?linkedin\.com\//.test(url);
 
 async function waitComplete(id, timeout = 45000) {
@@ -66,22 +79,18 @@ async function exec(id, action, args = []) {
 // ---------- commands from the backend ----------
 const commands = {
   async useWorkTab() {
+    const winId = await botWindow();
     let tab = null;
     const saved = (await getTabs()).work;
     if (saved) tab = await chrome.tabs.get(saved).catch(() => null);
-    if (!tab || !isLinkedIn(tab.url)) {
-      const [active] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      if (active && isLinkedIn(active.url)) tab = active;
-    }
-    if (!tab || !isLinkedIn(tab.url)) {
-      const all = await chrome.tabs.query({ url: ['https://www.linkedin.com/*', 'https://linkedin.com/*'] });
-      tab = all.find((t) => /\/sales\//.test(t.url)) || all[0] || null;
-    }
+    if (tab && tab.windowId !== winId) tab = null; // never drive a tab in your own windows
     if (!tab) {
-      tab = await chrome.tabs.create({ url: 'https://www.linkedin.com/sales/home', active: true });
-      await waitComplete(tab.id);
-      tab = await chrome.tabs.get(tab.id);
+      const inWin = await chrome.tabs.query({ windowId: winId });
+      tab = inWin.find((t) => isLinkedIn(t.url || t.pendingUrl)) || null;
     }
+    if (!tab) tab = await chrome.tabs.create({ windowId: winId, url: 'https://www.linkedin.com/sales/home', active: true });
+    await waitComplete(tab.id);
+    tab = await chrome.tabs.get(tab.id);
     await setTab('work', tab.id);
     const loggedIn = await exec(tab.id, 'isLoggedIn');
     return { tabId: tab.id, url: tab.url, loggedIn: !!loggedIn };
@@ -199,10 +208,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
       const t = work ? await chrome.tabs.get(work).catch(() => null) : null;
       const { port = DEFAULT_PORT } = await chrome.storage.local.get('port');
       reply({ connected: !!ws && ws.readyState === 1, lastError, port, workTab: t ? { title: t.title, url: t.url } : null });
-    } else if (msg.type === 'useThisTab') {
-      const [active] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-      if (!active || !isLinkedIn(active.url)) return reply({ error: 'Open your LinkedIn tab first' });
-      await setTab('work', active.id);
+    } else if (msg.type === 'showBotWindow') {
+      await chrome.windows.update(await botWindow(), { focused: true, state: 'normal' });
       reply({ ok: true });
     } else if (msg.type === 'setPort') {
       await chrome.storage.local.set({ port: Number(msg.port) || DEFAULT_PORT });

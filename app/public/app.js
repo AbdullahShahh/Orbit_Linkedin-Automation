@@ -147,6 +147,7 @@ function renderChart(daily, acceptedDaily = []) {
 function renderStatus(s) {
   if (!s) return;
   STATUS = s;
+  notifyRunEnd(s);
   const pill = $('#runPill');
   pill.textContent = { idle: 'Idle', running: s.mode === 'sync' ? 'Syncing leads' : s.mode === 'accept' ? 'Checking acceptances' : 'Running', paused: 'Paused', stopping: 'Stopping…' }[s.status];
   pill.className = 'status-pill ' + s.status;
@@ -174,10 +175,54 @@ function renderStatus(s) {
   $('#sideStatus').innerHTML = `<div><span>Status</span><b>${pill.textContent}</b></div><div><span>Today</span><b>${s.sentToday}/${s.dailyLimit}</b></div><div><span>Extension</span><b>${s.extension ? 'connected' : 'offline'}</b></div>`;
 
   renderLimitPause(s.limitPause);
+  renderRunReport(s);
 
   if (s.wait) startCountdown(s.wait);
   else stopCountdown();
 }
+
+// ---------- why the last run / each list stopped ----------
+const REASON_ICON = { done: '✓', info: 'ℹ', warn: '⚠', error: '✕', stopped: '■', limit: '⏸' };
+const REASON_TITLE = { done: 'Run finished', info: 'Run finished', warn: 'Run stopped early', error: 'Run failed', stopped: 'Run stopped by you', limit: 'Run paused – limit reached' };
+const listName = (id) => (LISTS.find((l) => l.id == id) || {}).name || `List #${id}`;
+// a run that "finished" but where a list fell short is still worth a warning
+function runTone(run) {
+  const kinds = Object.values(run.reasons || {}).map((r) => r.kind);
+  if (run.end.kind !== 'done') return run.end.kind;
+  return kinds.includes('error') ? 'error' : kinds.includes('warn') ? 'warn' : 'done';
+}
+function reportBody(run) {
+  const rows = Object.entries(run.reasons || {}).map(([id, r]) =>
+    `<li class="rr-${r.kind}"><i>${REASON_ICON[r.kind] || '•'}</i><div><b>${esc(listName(id))}</b>` +
+    `<span class="sub"> · ${run.byList?.[id] || 0} sent this run</span><div>${esc(r.text)}</div></div></li>`).join('');
+  return `<p class="rr-end">${esc(run.end.text)} <span class="sub">· ${esc(run.end.at)}</span></p>${rows ? `<ul class="rr-list">${rows}</ul>` : ''}`;
+}
+const seenReport = () => { try { return localStorage.getItem('runReportSeen'); } catch { return null; } };
+function renderRunReport(s) {
+  const box = $('#runReport');
+  const run = s.lastRun;
+  if (s.status !== 'idle' || !run || !run.end || seenReport() === run.end.at) return box.classList.add('hidden');
+  const tone = runTone(run);
+  box.className = `run-report rr-${tone}`;
+  box.innerHTML = `<div class="rr-head"><b>${REASON_ICON[tone]} ${REASON_TITLE[tone]}</b><button class="btn sm ghost" data-rr="dismiss">Dismiss</button></div>${reportBody(run)}`;
+}
+// popup + desktop notification the moment a sending run ends
+let prevRun = null;
+function notifyRunEnd(s) {
+  const wasSending = prevRun && prevRun.status !== 'idle' && prevRun.mode === 'connect';
+  prevRun = { status: s.status, mode: s.mode };
+  const run = s.lastRun;
+  if (!wasSending || s.status !== 'idle' || !run || !run.end) return;
+  const tone = runTone(run);
+  const lines = [run.end.text, ...Object.entries(run.reasons || {}).map(([id, r]) => `${listName(id)}: ${r.text}`)];
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification(`LinkedIn bot – ${REASON_TITLE[tone]}`, { body: lines.join('\n') }); } catch {}
+  if (!s.limitPause || run.end.kind !== 'limit') openModal(`${REASON_ICON[tone]} ${REASON_TITLE[tone]}`, `<div class="run-report-pop">${reportBody(run)}</div>`);
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-rr="dismiss"]')) return;
+  try { localStorage.setItem('runReportSeen', STATUS.lastRun.end.at); } catch {}
+  $('#runReport').classList.add('hidden');
+});
 
 // ---------- LinkedIn limit -> all campaigns paused ----------
 let limitShownAt = null;
@@ -258,6 +303,7 @@ function stopCountdown() {
 
 const selectedListIds = () => $$('#runLists input:checked').map((i) => Number(i.value));
 $('#btnStart').onclick = guard(async () => {
+  try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch {}
   renderStatus(await api('/api/runner/start', { method: 'POST', body: { list_ids: selectedListIds() } }));
   toast('Started');
 });
@@ -274,7 +320,7 @@ $('#btnResume').onclick = guard(async () => renderStatus(await api('/api/runner/
 $('#btnStop').onclick = guard(async () => renderStatus(await api('/api/runner/stop', { method: 'POST' })));
 $('#btnBrowser').onclick = guard(async () => {
   const r = await api('/api/extension/test', { method: 'POST' });
-  toast(r.loggedIn ? `Using your LinkedIn tab ✓ (${r.url.slice(0, 60)})` : 'That LinkedIn tab is not logged in', !r.loggedIn);
+  toast(r.loggedIn ? `Bot window ready, logged in ✓ (${r.url.slice(0, 60)})` : 'LinkedIn is not logged in – log in in the bot window', !r.loggedIn);
 });
 
 function logItem(l) {
@@ -505,6 +551,7 @@ function listCard(l) {
       </div>
 
       ${limitBlock(l)}
+      ${lastReason(l)}
 
       <div class="ls-foot">
         <span class="sub">⟳ Synced ${esc(l.last_synced_at || 'never')}</span>
@@ -515,6 +562,12 @@ function listCard(l) {
         </div>
       </div>
     </div>`;
+}
+
+function lastReason(l) {
+  const r = STATUS.lastRun?.reasons?.[l.id];
+  if (!r) return '';
+  return `<div class="ls-reason rr-${r.kind}"><i>${REASON_ICON[r.kind] || '•'}</i><div><b>Last run stopped:</b> ${esc(r.text)} <span class="sub">· ${esc(r.at)}</span></div></div>`;
 }
 
 function limitBlock(l) {

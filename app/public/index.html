@@ -28,11 +28,12 @@
         <div><h1>Dashboard</h1><p class="muted">Start, pause or stop the automation and watch it live.</p></div>
         <div class="row gap">
           <span class="ext-pill" id="extPill">Extension: …</span>
-          <button class="btn ghost" id="btnBrowser">🔌 Test my LinkedIn tab</button>
+          <button class="btn ghost" id="btnBrowser">🔌 Test LinkedIn connection</button>
         </div>
       </header>
 
       <div id="limitBanner" class="limit-banner hidden"></div>
+      <div id="runReport" class="run-report hidden"></div>
 
       <div class="cards">
         <div class="card stat"><span>Today</span><b id="stToday">0</b><small id="stTodayOf">notes sent of 0 daily limit</small><div class="bar"><div id="stTodayBar"></div></div></div>
@@ -201,7 +202,7 @@
         <ol class="steps">
           <li><b>Create a Message Type</b> – e.g. "Bookkeepers". Write the note. Use <code>{first_name}</code>, <code>{company}</code>, <code>{title}</code>. Separate alternative versions with a line containing <code>---</code>; one is picked at random. <code>[Hi|Hello]</code> picks one word at random.</li>
           <li><b>Add a List</b> – open your Sales Navigator <i>Saved search</i> (or lead list), copy the URL from the address bar, paste it here and pick the message type.</li>
-          <li><b>Your own Chrome</b> – keep LinkedIn / Sales Navigator open and logged in. The <i>LinkedIn Connect Bot</i> extension (badge shows <b>ON</b>) uses that tab. To pick a specific tab, open it and click the extension icon → <i>Use this tab</i>.</li>
+          <li><b>Your own Chrome</b> – stay logged in to LinkedIn / Sales Navigator. The <i>LinkedIn Connect Bot</i> extension (badge shows <b>ON</b>) opens its <b>own Chrome window</b> and works only there, without taking focus – keep using your other tabs normally. Don't minimize or close the bot window during a run; extension icon → <i>Show bot window</i> brings it up.</li>
           <li><b>Start sending</b> – for each lead the bot opens the LinkedIn profile, clicks <i>Connect</i> (or <i>More → Connect</i> for 3rd-degree), <i>Add a note</i>, pastes the personalised message and clicks <i>Send</i>. Then it waits your configured delay (default 30–50 s).</li>
           <li>Already-connected and already-invited people are skipped automatically and never contacted twice.</li>
         </ol>

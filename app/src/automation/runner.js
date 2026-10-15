@@ -27,6 +27,21 @@ let paused = false;
 
 const publish = () => emit('status', getStatus());
 
+// Why a list (or the whole run) stopped – shown on the dashboard and the list cards.
+// kind: done | info | warn | error | stopped | limit
+function noteStop(listId, kind, text) {
+  if (!state.lastRun || state.mode !== 'connect') return;
+  state.lastRun.reasons = state.lastRun.reasons || {};
+  state.lastRun.reasons[listId] = { kind, text, at: nowStamp() };
+  setState('last_run', state.lastRun);
+}
+function noteRunEnd(kind, text) {
+  if (!state.lastRun || state.mode !== 'connect') return;
+  state.lastRun.end = { kind, text, at: nowStamp() };
+  setState('last_run', state.lastRun);
+}
+const nowStamp = () => new Date().toLocaleString('sv-SE').slice(0, 16);
+
 function sentToday() {
   return db
     .prepare("SELECT COUNT(*) c FROM leads WHERE status = 'sent' AND date(sent_at) = date('now','localtime')")
@@ -266,11 +281,12 @@ async function run({ listIds, mode = 'connect' } = {}) {
   }
   publish();
 
+  let runLists = [];
   (async () => {
     try {
       const tab = await li.useWorkTab();
       if (!tab.loggedIn) throw new Error('LinkedIn is not logged in in your Chrome. Log in, then start again.');
-      logger.info(`Using your Chrome tab: ${tab.url.slice(0, 80)}`);
+      logger.info(`Using the bot window tab: ${tab.url.slice(0, 80)}`);
 
       if (mode === 'accept') {
         await checkAcceptances();
@@ -279,6 +295,7 @@ async function run({ listIds, mode = 'connect' } = {}) {
 
       let lists = db.prepare('SELECT * FROM lists WHERE active = 1 ORDER BY id').all();
       if (listIds && listIds.length) lists = lists.filter((l) => listIds.includes(l.id));
+      runLists = lists;
       if (!lists.length) throw new Error('No active lists selected');
 
       if (mode === 'sync') {
@@ -291,6 +308,7 @@ async function run({ listIds, mode = 'connect' } = {}) {
         const type = list.type_id && db.prepare('SELECT * FROM message_types WHERE id = ?').get(list.type_id);
         if (!type) {
           logger.warn(`List "${list.name}" has no message type assigned, skipped`, { list_id: list.id });
+          noteStop(list.id, 'error', 'No message type assigned – edit the list and pick one');
           continue;
         }
         logger.info(
@@ -298,7 +316,10 @@ async function run({ listIds, mode = 'connect' } = {}) {
             (list.send_limit ? ` – limit ${list.send_limit} notes (${sentSinceOn(list)} sent so far)` : ''),
           { list_id: list.id }
         );
-        let synced = false;
+        // How many new leads the last sync found (null = not synced yet this run). The saved search
+        // can exclude "Viewed profile", so people we visit drop out and a fresh sync shows new ones –
+        // keep re-syncing while that still brings new leads.
+        let lastSyncAdded = null;
 
         for (;;) {
           await checkpoint();
@@ -306,40 +327,54 @@ async function run({ listIds, mode = 'connect' } = {}) {
           const fresh = db.prepare('SELECT * FROM lists WHERE id = ?').get(list.id);
           if (!fresh || !fresh.active) {
             logger.info(`List "${list.name}" was turned off, moving on`, { list_id: list.id });
+            noteStop(list.id, 'info', 'List was turned OFF during the run');
             break;
           }
           if (fresh.send_limit > 0 && sentSinceOn(fresh) >= fresh.send_limit) {
             db.prepare('UPDATE lists SET active = 0 WHERE id = ?').run(list.id);
             emit('leads', { list_id: list.id });
             logger.success(`List "${list.name}": limit of ${fresh.send_limit} connection notes reached – list turned OFF`, { list_id: list.id });
+            noteStop(list.id, 'done', `Limit of ${fresh.send_limit} notes reached ✓ – list turned OFF`);
             break;
           }
           if (sentToday() >= Math.min(s.daily_limit, MAX_DAILY)) {
             logger.warn(`Daily limit reached (${s.daily_limit}). Stopping.`);
+            noteRunEnd('limit', `Daily limit of ${s.daily_limit} notes reached – continues tomorrow (change it in Settings)`);
             return;
           }
           const share = dailyShares()[list.id] ?? 0;
           if (listSentToday(list.id) >= share) {
             logger.info(`List "${list.name}": today's share of ${share} notes is done (daily ${s.daily_limit} ÷ active lists)`, { list_id: list.id });
+            noteStop(list.id, 'limit', `Today's share of ${share} notes is done (daily limit ${s.daily_limit} ÷ active lists) – continues tomorrow`);
             break;
           }
           if (state.sentThisRun >= s.run_limit) {
             logger.warn(`Run limit reached (${s.run_limit}). Stopping.`);
+            noteRunEnd('limit', `Per-run limit of ${s.run_limit} notes reached – press Start again to continue (change it in Settings)`);
             return;
           }
 
           let lead = pendingFor(list.id);
-          if (!lead && !synced) {
+          if (!lead && lastSyncAdded !== 0) {
             const remaining = Math.min(
               fresh.send_limit > 0 ? fresh.send_limit - sentSinceOn(fresh) : Infinity,
               share - listSentToday(list.id)
             );
-            await syncList(list, Math.max(Math.min(s.run_limit - state.sentThisRun, remaining), 10));
-            synced = true;
+            lastSyncAdded = await syncList(list, Math.max(Math.min(s.run_limit - state.sentThisRun, remaining), 10));
             lead = pendingFor(list.id);
           }
           if (!lead) {
-            logger.info(`No more pending leads in "${list.name}"`, { list_id: list.id });
+            if (fresh.send_limit > 0) {
+              logger.warn(
+                `"${list.name}": Sales Navigator search has no new people left – ${sentSinceOn(fresh)} of ${fresh.send_limit} notes sent. ` +
+                  `Widen the search filters (or raise "Max pages to scan") to reach the limit.`,
+                { list_id: list.id }
+              );
+              noteStop(list.id, 'warn', `Sales Navigator search has no new people left – only ${sentSinceOn(fresh)} of ${fresh.send_limit} notes sent. Widen the search filters.`);
+            } else {
+              logger.info(`No more pending leads in "${list.name}"`, { list_id: list.id });
+              noteStop(list.id, 'warn', 'Sales Navigator search has no new people left – widen the search filters to get more leads');
+            }
             break;
           }
 
@@ -350,6 +385,7 @@ async function run({ listIds, mode = 'connect' } = {}) {
           } catch (e) {
             if (!(e instanceof NoNotesError)) throw e;
             logger.warn(`${e.message} – list "${list.name}" skipped`, { list_id: list.id });
+            noteStop(list.id, 'error', `${e.message} – turn one ON in Message Types`);
             break;
           }
           const s2 = getSettings();
@@ -370,11 +406,24 @@ async function run({ listIds, mode = 'connect' } = {}) {
         }
       }
       logger.success('All selected lists processed');
+      noteRunEnd('done', 'All selected lists processed');
     } catch (e) {
-      if (e instanceof StopSignal) logger.warn('Run stopped');
-      else if (e instanceof li.LimitReachedError) pauseAllForLimit(e);
-      else logger.error(`Run failed: ${e.message}`);
+      if (e instanceof StopSignal) {
+        logger.warn('Run stopped');
+        noteRunEnd('stopped', 'You pressed Stop');
+      } else if (e instanceof li.LimitReachedError) {
+        pauseAllForLimit(e);
+        noteRunEnd('limit', `${e.message} – all campaigns paused`);
+      } else {
+        logger.error(`Run failed: ${e.message}`);
+        noteRunEnd('error', `Run failed: ${e.message}`);
+      }
     } finally {
+      // lists the run ended on (or never reached) get the run's reason
+      const end = state.lastRun && state.lastRun.end;
+      if (mode === 'connect' && end && end.kind !== 'done') {
+        for (const l of runLists) if (!state.lastRun.reasons?.[l.id]) noteStop(l.id, end.kind, end.text);
+      }
       if (mode === 'connect' && state.sentThisRun > 0 && !stopRequested && bridge.isConnected()) {
         try { await checkAcceptances(); } catch (err) { if (!(err instanceof StopSignal)) logger.warn(`Acceptance check failed: ${err.message}`); }
       }

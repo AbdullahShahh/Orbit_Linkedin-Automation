@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Connect Bot",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Runs your Sales Navigator connect-with-note workflow in your own logged-in LinkedIn tab. Controlled by the local dashboard (localhost).",
   "minimum_chrome_version": "116",
   "permissions": ["tabs", "scripting", "storage", "alarms"],

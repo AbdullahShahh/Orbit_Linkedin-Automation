@@ -8,7 +8,7 @@ function refresh() {
     $('port').value = s.port;
     $('conn').textContent = s.connected ? 'Connected' : 'Not connected';
     $('conn').className = s.connected ? 'ok' : 'bad';
-    $('tab').textContent = s.workTab ? s.workTab.title : 'auto (active LinkedIn tab)';
+    $('tab').textContent = s.workTab ? s.workTab.title : 'opens on the next run';
     $('tab').title = s.workTab ? s.workTab.url : '';
     $('err').textContent = s.connected ? '' : s.lastError || 'Start the dashboard server (start.command)';
   });
@@ -16,7 +16,7 @@ function refresh() {
 
 $('open').onclick = () => chrome.tabs.create({ url: `http://localhost:${port}` });
 $('use').onclick = () =>
-  chrome.runtime.sendMessage({ type: 'useThisTab' }, (r) => {
+  chrome.runtime.sendMessage({ type: 'showBotWindow' }, (r) => {
     $('err').textContent = r && r.error ? r.error : '';
     refresh();
   });
