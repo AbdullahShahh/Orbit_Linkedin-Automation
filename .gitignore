@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+
+# local database, logs and debug dumps (contain lead personal data)
+app/data/
+
+# workflow recording + screenshots (show real LinkedIn profiles; large)
+*.mov
+workflow-screenshots/
+
+# OS / editor
+.DS_Store
+.env

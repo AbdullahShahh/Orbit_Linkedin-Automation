@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkedIn Connect Automation</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="logo">in</span><div><b>Connect Bot</b><small>Sales Navigator</small></div></div>
+    <nav>
+      <a data-view="dashboard" class="active"><i>◉</i> Dashboard</a>
+      <a data-view="lists"><i>☰</i> Lists</a>
+      <a data-view="types"><i>✉</i> Message Types</a>
+      <a data-view="leads"><i>👥</i> Leads</a>
+      <a data-view="settings"><i>⚙</i> Settings</a>
+      <a data-view="logs"><i>≡</i> Activity Log</a>
+      <a data-view="guide"><i>?</i> How it works</a>
+    </nav>
+    <div class="side-status" id="sideStatus"></div>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view active">
+      <header class="page-head">
+        <div><h1>Dashboard</h1><p class="muted">Start, pause or stop the automation and watch it live.</p></div>
+        <div class="row gap">
+          <span class="ext-pill" id="extPill">Extension: …</span>
+          <button class="btn ghost" id="btnBrowser">🔌 Test my LinkedIn tab</button>
+        </div>
+      </header>
+
+      <div id="limitBanner" class="limit-banner hidden"></div>
+
+      <div class="cards">
+        <div class="card stat"><span>Today</span><b id="stToday">0</b><small id="stTodayOf">notes sent of 0 daily limit</small><div class="bar"><div id="stTodayBar"></div></div></div>
+        <div class="card stat accept"><span>Accepted</span><b id="stAccepted">0</b><small id="stAcceptRate">of 0 notes sent · 0%</small><div class="bar"><div id="stAcceptBar"></div></div></div>
+        <div class="card stat"><span>Leads waiting</span><b id="stPending">0</b><small>not contacted yet</small></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Run control</h3>
+          <div class="status-pill" id="runPill">Idle</div>
+          <div id="runNow" class="run-now muted">Nothing running.</div>
+          <div id="countdown" class="countdown hidden">
+            <div class="cd-label" id="cdLabel">Next connection in</div>
+            <div class="cd-num" id="cdNum">0s</div>
+            <div class="bar"><div id="cdBar"></div></div>
+          </div>
+          <label class="lbl">Lists to run <small class="muted">(none ticked = all active lists)</small></label>
+          <div id="runLists" class="checklist"></div>
+          <div class="row gap wrap mt">
+            <button class="btn primary" id="btnStart">▶ Start sending</button>
+            <button class="btn" id="btnSync" title="Only collect leads from the lists, no invitations">⟳ Sync leads only</button>
+            <button class="btn" id="btnAccept" title="Open your Connections page and mark who accepted">✓ Check acceptances</button>
+            <button class="btn" id="btnPause">⏸ Pause</button>
+            <button class="btn" id="btnResume">⏵ Resume</button>
+            <button class="btn danger" id="btnStop">■ Stop</button>
+          </div>
+          <div class="hint" id="dryHint"></div>
+        </div>
+        <div class="card">
+          <div class="row between"><h3>Live activity</h3><a class="link" data-goto="logs">See all</a></div>
+          <ul class="log" id="liveLog"></ul>
+        </div>
+      </div>
+
+      <div class="card mt">
+        <div class="row between"><h3>Campaign results</h3><span class="sub">all campaigns – ON and OFF · run numbers are only shown here</span></div>
+        <table class="tbl compact" id="campaignTbl"></table>
+      </div>
+
+      <div class="card mt">
+        <div class="row between"><h3>Sent vs accepted – last 14 days</h3><div class="legend"><span><i class="lg-sent"></i>Sent</span><span><i class="lg-acc"></i>Accepted</span></div></div>
+        <div class="sub" id="lastAccept"></div>
+        <div id="chart" class="chart"></div>
+      </div>
+    </section>
+
+    <!-- LISTS -->
+    <section id="view-lists" class="view">
+      <header class="page-head">
+        <div><h1>Lists</h1><p class="muted">Each Sales Navigator saved search or lead list, linked to the message type it should use.</p></div>
+        <button class="btn primary" id="btnAddList">+ Add list</button>
+      </header>
+      <div id="listsSummary" class="ls-summary"></div>
+      <div id="listsTbl" class="ls-grid"></div>
+    </section>
+
+    <!-- TYPES -->
+    <section id="view-types" class="view">
+      <header class="page-head">
+        <div><h1>Message Types</h1><p class="muted">One connection note per audience type. Lists pick which type to use.</p></div>
+        <button class="btn primary" id="btnAddType">+ Add message type</button>
+      </header>
+      <div id="typesGrid" class="types-grid"></div>
+    </section>
+
+    <!-- LEADS -->
+    <section id="view-leads" class="view">
+      <header class="page-head">
+        <div><h1>Leads</h1><p class="muted">Everyone collected from your lists and what happened to them.</p></div>
+        <div class="row gap"><button class="btn" id="btnResetFailed" title="Only if you want to: put leads skipped because of an error back in the queue (email-required ones stay skipped)">↺ Retry error skips</button><a class="btn" href="/api/leads/export.csv">⬇ Export CSV</a></div>
+      </header>
+      <div class="filters row gap wrap">
+        <input id="fQ" placeholder="Search name, company, title..." />
+        <select id="fList"><option value="">All lists</option></select>
+        <select id="fStatus">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option><option value="sent">Sent</option>
+          <option value="skipped">Skipped</option><option value="already_connected">Already connected</option>
+          <option value="pending_invite">Invite already pending</option><option value="failed">Failed</option>
+          <option value="accepted">✓ Accepted</option><option value="awaiting">Sent – not accepted yet</option>
+        </select>
+      </div>
+      <div class="card p0"><table class="tbl" id="leadsTbl"></table></div>
+      <div class="row between mt"><span class="muted" id="leadsCount"></span><div class="row gap"><button class="btn sm" id="pgPrev">‹ Prev</button><button class="btn sm" id="pgNext">Next ›</button></div></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <header class="page-head">
+        <div><h1>Settings</h1><p class="muted">All automation numbers. Changes apply immediately – even during a running session.</p></div>
+      </header>
+      <form id="settingsForm" class="card settings">
+        <fieldset>
+          <legend>Delays</legend>
+          <p class="muted">A random wait between <b>min</b> and <b>max</b> seconds after every invitation.</p>
+          <div class="row gap">
+            <label>Minimum (sec)<input type="number" name="delay_min" min="0" /></label>
+            <label>Maximum (sec)<input type="number" name="delay_max" min="0" /></label>
+          </div>
+          <div class="row gap">
+            <label>Stay on each tab min (sec)<input type="number" name="tab_wait_min" min="0" /><small>every page/tab the bot opens</small></label>
+            <label>Stay on each tab max (sec)<input type="number" name="tab_wait_max" min="0" /></label>
+          </div>
+          <div class="row gap">
+            <label>Minimum time per profile (sec)<input type="number" name="profile_min_seconds" min="0" /><small>tab stays open at least this long</small></label>
+            <label></label>
+          </div>
+          <div class="row gap">
+            <label>Break after every … notes<input type="number" name="batch_size" min="0" /><small>counted over all lists per day · 0 = no breaks</small></label>
+            <label>Break min (minutes)<input type="number" name="batch_break_min" min="0" /></label>
+            <label>Break max (minutes)<input type="number" name="batch_break_max" min="0" /></label>
+          </div>
+          <div class="row gap">
+            <label>Skip pause min (sec)<input type="number" name="skip_delay_min" min="0" /></label>
+            <label>Skip pause max (sec)<input type="number" name="skip_delay_max" min="0" /></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Safety limits</legend>
+          <div class="row gap">
+            <label>Daily limit<input type="number" name="daily_limit" min="1" max="100" /><small>max 100 per day – split equally between active lists</small></label>
+            <label>Per-run limit<input type="number" name="run_limit" min="1" /><small>max invites per Start click</small></label>
+          </div>
+          <div class="row gap">
+            <label>Note max characters<input type="number" name="note_max_chars" min="50" /><small>300 premium · 200 free</small></label>
+
+          </div>
+          <div class="row gap">
+            <label>Check acceptances every (hours)<input type="number" name="acceptance_check_hours" min="0" /><small>while idle · also runs after each run and during breaks · 0 = only those</small></label>
+            <label>Recent connections to read<input type="number" name="acceptance_scan_max" min="50" /><small>per check (newest first)</small></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Behaviour</legend>
+          <div class="row gap">
+            <label>Page load wait (sec)<input type="number" name="page_load_wait" min="1" /><small>increase on slow internet</small></label>
+            <label>Lead location doesn't show a country
+              <select name="skip_unclear_location"><option value="0">Send the note anyway</option><option value="1">Skip the lead</option></select>
+              <small>only for lists with target countries (e.g. "Remote")</small>
+            </label>
+          </div>
+          <div class="row gap">
+            <label class="switch-row">Test mode (dry run)
+              <select name="dry_run"><option value="0">Off – really send</option><option value="1">On – fill note but don't click Send</option></select>
+            </label>
+          </div>
+        </fieldset>
+        <div class="row gap"><button class="btn primary" type="submit">Save settings</button></div>
+      </form>
+    </section>
+
+    <!-- LOGS -->
+    <section id="view-logs" class="view">
+      <header class="page-head">
+        <div><h1>Activity Log</h1><p class="muted">Every step the bot took.</p></div>
+        <button class="btn" id="btnClearLogs">Clear log</button>
+      </header>
+      <div class="card"><ul class="log big" id="fullLog"></ul></div>
+    </section>
+
+    <!-- GUIDE -->
+    <section id="view-guide" class="view">
+      <header class="page-head"><div><h1>How it works</h1><p class="muted">The recorded manual workflow that this app repeats for you.</p></div></header>
+      <div class="card guide">
+        <ol class="steps">
+          <li><b>Create a Message Type</b> – e.g. "Bookkeepers". Write the note. Use <code>{first_name}</code>, <code>{company}</code>, <code>{title}</code>. Separate alternative versions with a line containing <code>---</code>; one is picked at random. <code>[Hi|Hello]</code> picks one word at random.</li>
+          <li><b>Add a List</b> – open your Sales Navigator <i>Saved search</i> (or lead list), copy the URL from the address bar, paste it here and pick the message type.</li>
+          <li><b>Your own Chrome</b> – keep LinkedIn / Sales Navigator open and logged in. The <i>LinkedIn Connect Bot</i> extension (badge shows <b>ON</b>) uses that tab. To pick a specific tab, open it and click the extension icon → <i>Use this tab</i>.</li>
+          <li><b>Start sending</b> – for each lead the bot opens the LinkedIn profile, clicks <i>Connect</i> (or <i>More → Connect</i> for 3rd-degree), <i>Add a note</i>, pastes the personalised message and clicks <i>Send</i>. Then it waits your configured delay (default 30–50 s).</li>
+          <li>Already-connected and already-invited people are skipped automatically and never contacted twice.</li>
+        </ol>
+      </div>
+      <h3 class="mt">Recorded workflow screenshots</h3>
+      <div id="shots" class="shots"></div>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-bg hidden" id="modalBg">
+    <div class="modal">
+      <div class="modal-head"><h3 id="modalTitle"></h3><button class="x" id="modalClose">×</button></div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

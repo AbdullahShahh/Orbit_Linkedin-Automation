@@ -1,0 +1,654 @@
+{
+  "info": {
+    "name": "LinkedIn Connect Bot (local)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base",
+      "value": "http://localhost:4000/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "Message Types",
+      "item": [
+        {
+          "name": "List types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/types",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "types"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/types",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "types"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"CPAs\",\n  \"template\": \"Hi {first_name}, I work with CPA firms like {company}...\\n---\\n[Hi|Hello] {first_name}, ...\",\n  \"description\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/types/1",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "types",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bookkeepers\",\n  \"template\": \"Hi {first_name}, ...\",\n  \"description\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/types/1",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "types",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lists",
+      "item": [
+        {
+          "name": "List lists (with lead counts)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/lists",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "lists"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create list",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/lists",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "lists"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"US Bookkeepers\",\n  \"url\": \"https://www.linkedin.com/sales/search/people?savedSearchId=123\",\n  \"type_id\": 1,\n  \"max_pages\": 20,\n  \"active\": true,\n  \"notes\": \"\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update list",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/lists/1",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "lists",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"US Bookkeepers\",\n  \"url\": \"https://www.linkedin.com/sales/search/people?savedSearchId=123\",\n  \"type_id\": 1,\n  \"max_pages\": 20,\n  \"active\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Activate / pause list",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/lists/1/active",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "lists",
+                "1",
+                "active"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete list",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/lists/1",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "lists",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "Search leads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/leads?list_id=&status=&q=&limit=50&offset=0",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "leads"
+              ],
+              "query": [
+                {
+                  "key": "list_id",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset lead to pending",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/leads/1/reset",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "leads",
+                "1",
+                "reset"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Retry all failed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/leads/reset-failed",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "leads",
+                "reset-failed"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Edit lead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/leads/1",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "leads",
+                "1"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Mike\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete lead",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/leads/1",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "leads",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/leads/export.csv",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "leads",
+                "export.csv"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Get settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/settings",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "settings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update delay / limits",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/settings",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "settings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"delay_min\": 30,\n  \"delay_max\": 50,\n  \"daily_limit\": 25,\n  \"run_limit\": 20,\n  \"dry_run\": 0\n}"
+            }
+          }
+        },
+        {
+          "name": "Preview template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/preview",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "preview"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"template\": \"Hi {first_name}, ...\",\n  \"lead\": {\n    \"name\": \"Martin Fletcher\",\n    \"company\": \"Modern Back Office\"\n  }\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Runner",
+      "item": [
+        {
+          "name": "Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/runner/status",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "runner",
+                "status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Start sending",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/runner/start",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "runner",
+                "start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"list_ids\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "Sync leads only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/runner/sync",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "runner",
+                "sync"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"list_ids\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "Pause",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/runner/pause",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "runner",
+                "pause"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resume",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/runner/resume",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "runner",
+                "resume"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/runner/stop",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "runner",
+                "stop"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Extension status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/extension",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "extension"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Test LinkedIn tab",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/extension/test",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "extension",
+                "test"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stats & Logs",
+      "item": [
+        {
+          "name": "Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/stats",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "stats"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/logs?limit=200",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "logs"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "200"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Clear logs",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/logs",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "logs"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
