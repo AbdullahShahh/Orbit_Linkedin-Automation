@@ -1,4 +1,6 @@
-# LinkedIn Connect Bot (personal)
+# Orbit_Linkedin-Automation
+
+**LinkedIn Connect Bot (personal)**
 
 This app repeats the workflow in `linkedin workflow.mov` (screenshots are in `workflow-screenshots/`):
 
@@ -52,4 +54,3 @@ Main ones: `/types`, `/lists`, `/leads`, `/settings`, `/runner/start|sync|pause|
 
 ## If LinkedIn changes its page layout
 All clicking logic is in `chrome-extension/actions.js` (Connect / More / Add a note / Send). After editing it, open `chrome://extensions` and click the reload icon on the extension.
-# Orbit_Linkedin-Automation
