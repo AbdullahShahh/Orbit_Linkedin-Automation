@@ -196,7 +196,7 @@ select {
 .limit-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: #fff4e5; border: 1px solid #f3c27a; color: #6b4200; border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; }
 .limit-banner .sub { color: #8a5a10; font-size: 12.5px; margin-top: 2px; }
 .limit-pop .lp-title { font-size: 17px; font-weight: 800; color: var(--red); margin: 0 0 4px; }
-.limit-pop .lp-urdu { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
+.limit-pop .lp-summary { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
 .lp-facts { border-collapse: collapse; margin: 8px 0 12px; font-size: 13px; }
 .lp-facts td { padding: 4px 14px 4px 0; vertical-align: top; }
 .lp-facts td:first-child { color: var(--muted); }

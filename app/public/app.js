@@ -228,8 +228,8 @@ document.addEventListener('click', (e) => {
 let limitShownAt = null;
 function limitText(p) {
   return p.kind === 'notes'
-    ? { title: 'Personalized notes limit reached', urdu: 'Connection notes ki limit puri hone ki wajah se yeh campaigns ruk gayi hain.' }
-    : { title: 'LinkedIn weekly invitation limit reached', urdu: 'Weekly limit puri hone ki wajah se yeh campaigns ruk gayi hain.' };
+    ? { title: 'Personalized notes limit reached', summary: 'These campaigns were paused because the connection notes limit was reached.' }
+    : { title: 'LinkedIn weekly invitation limit reached', summary: 'These campaigns were paused because the weekly invitation limit was reached.' };
 }
 function renderLimitPause(p) {
   const banner = $('#limitBanner');
@@ -240,7 +240,7 @@ function renderLimitPause(p) {
   }
   const t = limitText(p);
   banner.classList.remove('hidden');
-  banner.innerHTML = `<div><b>⏸ ${esc(t.title)} – all campaigns paused</b><div class="sub">${esc(t.urdu)} Paused at ${esc(p.at)} · ${p.list_names.length} list(s)</div></div>
+  banner.innerHTML = `<div><b>⏸ ${esc(t.title)} – all campaigns paused</b><div class="sub">${esc(t.summary)} Paused at ${esc(p.at)} · ${p.list_names.length} list(s)</div></div>
     <div class="row gap"><button class="btn sm primary" data-limit="resume">Resume campaigns</button><button class="btn sm" data-limit="details">Details</button></div>`;
   if (limitShownAt !== p.at) {
     limitShownAt = p.at;
@@ -252,7 +252,7 @@ function showLimitPopup(p) {
   openModal('⏸ Campaigns paused', `
     <div class="limit-pop">
       <p class="lp-title">${esc(t.title)}</p>
-      <p class="lp-urdu">${esc(t.urdu)}</p>
+      <p class="lp-summary">${esc(t.summary)}</p>
       <p>LinkedIn stopped accepting more invitations, so the bot paused <b>all campaigns</b> automatically to protect your account.
          Nothing else will be sent until you resume.</p>
       <table class="lp-facts">
