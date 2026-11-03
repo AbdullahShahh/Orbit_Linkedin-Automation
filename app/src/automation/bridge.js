@@ -57,7 +57,7 @@ function attach(server) {
 }
 
 function call(cmd, args = {}, timeoutMs = 90000) {
-  if (!socket) return Promise.reject(new Error('Chrome extension not connected. Open Chrome and make sure the "LinkedIn Connect Bot" extension is enabled.'));
+  if (!socket) return Promise.reject(new Error('Chrome extension not connected. Open Chrome and make sure the "LinkedIn Bot" extension is enabled.'));
   const id = ++seq;
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {

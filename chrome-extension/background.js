@@ -1,5 +1,6 @@
 // Connects to the local backend over WebSocket and executes its commands in YOUR Chrome:
 // navigating your LinkedIn tab, opening a profile tab, running DOM actions (actions.js).
+importScripts('linkedin-fetch.js'); // post search without a tab (self.linkedinFetch)
 const DEFAULT_PORT = 4000;
 let ws = null;
 let lastError = '';
@@ -20,25 +21,53 @@ async function tabId(role) {
   try {
     await chrome.tabs.get(id);
   } catch {
-    throw new Error(role === 'work' ? 'Your LinkedIn tab was closed' : 'Profile tab was closed');
+    throw new Error(/work$/.test(role) ? 'Your LinkedIn tab was closed' : 'Profile tab was closed');
   }
   return id;
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// The bot works in its own Chrome window, created without focus, so it never pulls you away from
-// the tab you are using. Its tabs switch only inside that window.
-async function botWindow() {
-  const { botWin } = await chrome.storage.session.get('botWin');
-  if (botWin) {
-    const w = await chrome.windows.get(botWin).catch(() => null);
-    if (w) return w.id;
+// The bot works in a collapsed tab group ("LinkedIn Bot") inside your normal Chrome window – no
+// extra window. Its tabs are always opened in the background (active: false), so the tab you are
+// looking at never changes; when a job is done the group's tabs are closed.
+const GROUP = { title: 'LinkedIn Bot', color: 'blue' };
+
+/** The bot's tab group: the one remembered, else any group called "LinkedIn Bot" (only one is ever kept) */
+async function botGroup() {
+  const { botGroup: id } = await chrome.storage.session.get('botGroup');
+  let g = id == null ? null : await chrome.tabGroups.get(id).catch(() => null);
+  if (!g) {
+    g = (await chrome.tabGroups.query({ title: GROUP.title }).catch(() => []))[0] || null;
+    if (g) await chrome.storage.session.set({ botGroup: g.id });
   }
-  const w = await chrome.windows.create({ url: 'https://www.linkedin.com/sales/home', focused: false, state: 'normal', width: 1280, height: 900 });
-  await chrome.storage.session.set({ botWin: w.id });
-  return w.id;
+  return g;
 }
+
+/** Window the bot tabs live in: the group's window, else the window you used last */
+async function hostWindow() {
+  const g = await botGroup();
+  if (g) return g.windowId;
+  const w = await chrome.windows.getLastFocused({ windowTypes: ['normal'] }).catch(() => null);
+  if (w) return w.id;
+  // no Chrome window open at all -> one minimized window just for the bot
+  return (await chrome.windows.create({ focused: false, state: 'minimized' })).id;
+}
+
+/** Puts a bot tab into the "LinkedIn Bot" group (created collapsed the first time) */
+async function addToGroup(tabId) {
+  const g = await botGroup();
+  const t = await chrome.tabs.get(tabId);
+  if (g && g.windowId === t.windowId) {
+    await chrome.tabs.group({ groupId: g.id, tabIds: [tabId] });
+    return g.id;
+  }
+  const id = await chrome.tabs.group({ tabIds: [tabId], createProperties: { windowId: t.windowId } });
+  await chrome.storage.session.set({ botGroup: id }); // remember first, so a failed update can't make a second group
+  await chrome.tabGroups.update(id, { ...GROUP, collapsed: true }).catch(() => {});
+  return id;
+}
+
 const isLinkedIn = (url = '') => /^https:\/\/(www\.)?linkedin\.com\//.test(url);
 
 async function waitComplete(id, timeout = 45000) {
@@ -78,20 +107,26 @@ async function exec(id, action, args = []) {
 
 // ---------- commands from the backend ----------
 const commands = {
-  async useWorkTab() {
-    const winId = await botWindow();
+  // Each runner has its own tabs: campaigns use 'work' + 'job', the prospect finder 'pwork' + 'pjob',
+  // so both can run at the same time without changing each other's pages.
+  async useWorkTab({ role = 'work' } = {}) {
+    const g = await botGroup();
+    const roles = await getTabs();
     let tab = null;
-    const saved = (await getTabs()).work;
-    if (saved) tab = await chrome.tabs.get(saved).catch(() => null);
-    if (tab && tab.windowId !== winId) tab = null; // never drive a tab in your own windows
-    if (!tab) {
-      const inWin = await chrome.tabs.query({ windowId: winId });
-      tab = inWin.find((t) => isLinkedIn(t.url || t.pendingUrl)) || null;
+    if (roles[role]) tab = await chrome.tabs.get(roles[role]).catch(() => null);
+    if (tab && (!g || tab.groupId !== g.id)) tab = null; // only ever drive the bot's own tabs, never yours
+    if (!tab && g) {
+      const taken = new Set(Object.entries(roles).filter(([r, id]) => r !== role && id).map(([, id]) => id));
+      const inGroup = await chrome.tabs.query({ groupId: g.id });
+      tab = inGroup.find((t) => !taken.has(t.id) && isLinkedIn(t.url || t.pendingUrl)) || null;
     }
-    if (!tab) tab = await chrome.tabs.create({ windowId: winId, url: 'https://www.linkedin.com/sales/home', active: true });
+    if (!tab) {
+      tab = await chrome.tabs.create({ windowId: await hostWindow(), url: role === 'work' ? 'https://www.linkedin.com/sales/home' : 'https://www.linkedin.com/robots.txt', active: false });
+      await addToGroup(tab.id);
+    }
     await waitComplete(tab.id);
     tab = await chrome.tabs.get(tab.id);
-    await setTab('work', tab.id);
+    await setTab(role, tab.id);
     const loggedIn = await exec(tab.id, 'isLoggedIn');
     return { tabId: tab.id, url: tab.url, loggedIn: !!loggedIn };
   },
@@ -104,10 +139,12 @@ const commands = {
     return true;
   },
 
-  async openTab({ url, settle = 3 }) {
-    const work = await chrome.tabs.get(await tabId('work'));
-    const t = await chrome.tabs.create({ url, active: true, windowId: work.windowId, index: work.index + 1 });
-    await setTab('job', t.id);
+  async openTab({ url, settle = 3, role = 'job', near = 'work' }) {
+    const nearId = (await getTabs())[near];
+    const by = nearId ? await chrome.tabs.get(nearId).catch(() => null) : null;
+    const t = await chrome.tabs.create({ url, active: false, windowId: by ? by.windowId : await hostWindow(), ...(by ? { index: by.index + 1 } : {}) });
+    await addToGroup(t.id);
+    await setTab(role, t.id);
     await waitComplete(t.id);
     await sleep(settle * 1000);
     return { tabId: t.id };
@@ -117,8 +154,6 @@ const commands = {
     const id = (await getTabs())[tab];
     if (id) await chrome.tabs.remove(id).catch(() => {});
     await setTab(tab, null);
-    const work = (await getTabs()).work;
-    if (work) await chrome.tabs.update(work, { active: true }).catch(() => {});
     return true;
   },
 
@@ -129,6 +164,52 @@ const commands = {
 
   async exec({ tab, action, args }) {
     return exec(await tabId(tab), action, args);
+  },
+
+  // Read a LinkedIn API with your login, straight from the extension – no tab needed
+  async apiGet({ url }) {
+    if (!/^https:\/\/www\.linkedin\.com\/voyager\/api\//.test(url)) throw new Error('Only LinkedIn API URLs');
+    const c = await chrome.cookies.get({ url: 'https://www.linkedin.com', name: 'JSESSIONID' });
+    const res = await fetch(url, {
+      credentials: 'include',
+      headers: { 'csrf-token': c ? c.value.replace(/"/g, '') : '', accept: 'application/vnd.linkedin.normalized+json+2.1', 'x-restli-protocol-version': '2.0.0' },
+    });
+    const text = await res.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch { /* not json */ }
+    return { status: res.status, json };
+  },
+
+  // Post search read in the background worker – no tab, nothing to freeze
+  async bg({ action, args = [] }) {
+    const fn = self.linkedinFetch && self.linkedinFetch[action];
+    if (!fn) throw new Error(`Unknown background action ${action}`);
+    return fn(...args);
+  },
+
+  // A runner is done: close only its own tabs (the group goes away when it's empty)
+  async closeTabs({ roles = [] }) {
+    const tabs = await getTabs();
+    for (const r of roles) {
+      if (tabs[r]) await chrome.tabs.remove(tabs[r]).catch(() => {});
+      await setTab(r, null);
+    }
+    return true;
+  },
+
+  // Job done -> close the bot's tabs (the group disappears with them). Name kept for the backend.
+  async closeBotWindow() {
+    // every "LinkedIn Bot" group (normally just one) – closing its tabs removes the group
+    const groups = await chrome.tabGroups.query({ title: GROUP.title }).catch(() => []);
+    for (const g of groups) {
+      const tabs = await chrome.tabs.query({ groupId: g.id });
+      if (tabs.length) await chrome.tabs.remove(tabs.map((t) => t.id)).catch(() => {});
+    }
+    // the separate bot window from older versions, if it is still open
+    const { botWin } = await chrome.storage.session.get('botWin');
+    if (botWin) await chrome.windows.remove(botWin).catch(() => {});
+    await chrome.storage.session.set({ botWin: null, botGroup: null, tabs: {} });
+    return true;
   },
 };
 
@@ -202,6 +283,11 @@ connect();
 
 // ---------- popup ----------
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  // waits for actions.js (page timers are slowed down in background tabs, this one isn't)
+  if (msg.type === 'sleep') {
+    setTimeout(() => reply({ ok: true }), Math.max(0, Math.min(Number(msg.ms) || 0, 120000)));
+    return true;
+  }
   (async () => {
     if (msg.type === 'status') {
       const work = (await getTabs()).work;
@@ -209,7 +295,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
       const { port = DEFAULT_PORT } = await chrome.storage.local.get('port');
       reply({ connected: !!ws && ws.readyState === 1, lastError, port, workTab: t ? { title: t.title, url: t.url } : null });
     } else if (msg.type === 'showBotWindow') {
-      await chrome.windows.update(await botWindow(), { focused: true, state: 'normal' });
+      // popup button: show the bot's tab (you asked for it)
+      const work = (await getTabs()).work;
+      const t = work ? await chrome.tabs.get(work).catch(() => null) : null;
+      if (t) {
+        if (t.groupId > -1) await chrome.tabGroups.update(t.groupId, { collapsed: false }).catch(() => {});
+        await chrome.tabs.update(t.id, { active: true });
+        await chrome.windows.update(t.windowId, { focused: true });
+      }
       reply({ ok: true });
     } else if (msg.type === 'setPort') {
       await chrome.storage.local.set({ port: Number(msg.port) || DEFAULT_PORT });

@@ -4,44 +4,70 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LinkedIn Connect Automation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Inter loads without blocking the page (falls back to the system font when offline) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <aside class="sidebar">
-    <div class="brand"><span class="logo">in</span><div><b>Connect Bot</b><small>Sales Navigator</small></div></div>
+    <div class="brand" data-app="connect"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.17L4 17.17zM8 9h8M8 12h5"/></svg></span><div><b>Outreach</b><small>Connection notes &amp; campaigns</small></div></div>
+    <div class="brand" data-app="finder"><span class="logo finder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span><div><b>Prospect Finder</b><small>Posts &amp; jobs on LinkedIn</small></div></div>
+    <div class="brand" data-app="jobs"><span class="logo jobs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></span><div><b>Job Applier</b><small>Remote jobs, applied for you</small></div></div>
+    <div class="app-switch">
+      <a href="/" data-app-link="connect">Outreach</a>
+      <a href="/finder#prospects" data-app-link="finder">Prospect Finder</a>
+      <a href="/jobs#jobs" data-app-link="jobs">Job Applier</a>
+    </div>
     <nav>
-      <a data-view="dashboard" class="active"><i>◉</i> Dashboard</a>
-      <a data-view="lists"><i>☰</i> Lists</a>
-      <a data-view="types"><i>✉</i> Message Types</a>
-      <a data-view="leads"><i>👥</i> Leads</a>
-      <a data-view="settings"><i>⚙</i> Settings</a>
-      <a data-view="logs"><i>≡</i> Activity Log</a>
-      <a data-view="guide"><i>?</i> How it works</a>
+      <a data-view="dashboard" data-app="connect"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13h8V3H3zm10 8h8V11h-8zM3 21h8v-6H3zm10-18v6h8V3z"/></svg></i> Dashboard</a>
+      <a data-view="lists" data-app="connect"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></i> Lists</a>
+      <a data-view="types" data-app="connect"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H5.17L4 17.17zM8 9h8M8 12h5"/></svg></i> Message Types</a>
+      <a data-view="leads" data-app="connect"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></i> Leads</a>
+      <a data-view="crm" data-app="connect"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg></i> CRM</a>
+      <a data-view="prospects" data-app="finder"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></i> Prospects</a>
+      <a data-view="jobs" data-app="jobs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></i> Applications</a>
+      <a data-view="settings"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></i> Settings</a>
+      <a data-view="logs"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></i> Activity Log</a>
+      <a data-view="guide"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></i> How it works</a>
     </nav>
     <div class="side-status" id="sideStatus"></div>
   </aside>
 
   <main>
     <!-- DASHBOARD -->
-    <section id="view-dashboard" class="view active">
+    <section id="view-dashboard" class="view" data-app="connect">
       <header class="page-head">
         <div><h1>Dashboard</h1><p class="muted">Start, pause or stop the automation and watch it live.</p></div>
         <div class="row gap">
           <span class="ext-pill" id="extPill">Extension: …</span>
-          <button class="btn ghost" id="btnBrowser">🔌 Test LinkedIn connection</button>
+          <button class="btn ghost" id="btnBrowser">Test connection</button>
         </div>
       </header>
 
       <div id="limitBanner" class="limit-banner hidden"></div>
+      <div id="safetyBar" class="safety-bar hidden"></div>
       <div id="runReport" class="run-report hidden"></div>
 
       <div class="cards">
         <div class="card stat"><span>Today</span><b id="stToday">0</b><small id="stTodayOf">notes sent of 0 daily limit</small><div class="bar"><div id="stTodayBar"></div></div></div>
         <div class="card stat accept"><span>Accepted</span><b id="stAccepted">0</b><small id="stAcceptRate">of 0 notes sent · 0%</small><div class="bar"><div id="stAcceptBar"></div></div></div>
-        <div class="card stat"><span>Leads waiting</span><b id="stPending">0</b><small>not contacted yet</small></div>
+        <div class="card stat"><span>Leads approved</span><b id="stPending">0</b><small id="stReview">ready to send</small></div>
       </div>
 
-      <div class="grid2">
+      <div class="grid2 pend-grid">
+        <div class="card pend-card">
+          <h3>Waiting for you</h3>
+          <ul class="pend-list" id="pendList"></ul>
+        </div>
+        <div class="card">
+          <div class="row between"><h3>Daily report</h3><span class="sub">last 7 days · updates by itself</span></div>
+          <div class="report-wrap"><table class="tbl compact report-tbl" id="reportTbl"></table></div>
+        </div>
+      </div>
+
+      <div class="grid2 mt">
         <div class="card">
           <h3>Run control</h3>
           <div class="status-pill" id="runPill">Idle</div>
@@ -54,12 +80,13 @@
           <label class="lbl">Lists to run <small class="muted">(none ticked = all active lists)</small></label>
           <div id="runLists" class="checklist"></div>
           <div class="row gap wrap mt">
-            <button class="btn primary" id="btnStart">▶ Start sending</button>
-            <button class="btn" id="btnSync" title="Only collect leads from the lists, no invitations">⟳ Sync leads only</button>
-            <button class="btn" id="btnAccept" title="Open your Connections page and mark who accepted">✓ Check acceptances</button>
-            <button class="btn" id="btnPause">⏸ Pause</button>
-            <button class="btn" id="btnResume">⏵ Resume</button>
-            <button class="btn danger" id="btnStop">■ Stop</button>
+            <button class="btn primary" id="btnStart">Start sending</button>
+            <button class="btn" id="btnSync" title="Only collect leads from the lists, no invitations">Sync leads only</button>
+            <button class="btn" id="btnFollowups" title="Send only the follow-up messages that are due (Start sends them too, before new notes)">Send follow-ups</button>
+            <button class="btn" id="btnAccept" title="Check right now who accepted (also done automatically every few minutes)">Check acceptances</button>
+            <button class="btn" id="btnPause">Pause</button>
+            <button class="btn" id="btnResume">Resume</button>
+            <button class="btn danger" id="btnStop">Stop</button>
           </div>
           <div class="hint" id="dryHint"></div>
         </div>
@@ -82,43 +109,147 @@
     </section>
 
     <!-- LISTS -->
-    <section id="view-lists" class="view">
+    <section id="view-lists" class="view" data-app="connect">
       <header class="page-head">
         <div><h1>Lists</h1><p class="muted">Each Sales Navigator saved search or lead list, linked to the message type it should use.</p></div>
-        <button class="btn primary" id="btnAddList">+ Add list</button>
+        <button class="btn primary" id="btnAddList">Add list</button>
       </header>
       <div id="listsSummary" class="ls-summary"></div>
       <div id="listsTbl" class="ls-grid"></div>
     </section>
 
     <!-- TYPES -->
-    <section id="view-types" class="view">
+    <section id="view-types" class="view" data-app="connect">
       <header class="page-head">
         <div><h1>Message Types</h1><p class="muted">One connection note per audience type. Lists pick which type to use.</p></div>
-        <button class="btn primary" id="btnAddType">+ Add message type</button>
+        <button class="btn primary" id="btnAddType">Add message type</button>
       </header>
       <div id="typesGrid" class="types-grid"></div>
     </section>
 
+    <!-- CRM -->
+    <section id="view-crm" class="view" data-app="connect">
+      <header class="page-head">
+        <div><h1>CRM</h1><p class="muted">Everyone who accepted your note, plus anyone you add. Leads move by themselves from their chats – drag a card to change its stage.</p></div>
+        <div class="row gap">
+          <label class="pr-search"><span class="search-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><input id="crmQ" placeholder="Search leads…" /></label>
+          <select id="crmList" title="Campaign"><option value="">All campaigns</option></select>
+          <button class="btn" id="btnCrmAdd" title="Put people on the board that the bot did not contact – pick them from your LinkedIn inbox or add them by hand">+ Add people</button>
+          <button class="btn" id="btnCheckReplies" title="Read the chats of people who accepted and have not replied yet – nothing is sent">Check replies</button>
+          <button class="btn primary" id="btnCrmFollowups" title="Send the follow-ups that are due now (each chat is checked first). They also go out by themselves when due.">Send follow-ups</button>
+        </div>
+      </header>
+      <div id="crmSummary" class="crm-summary"></div>
+      <div id="crmBoard" class="crm-board"></div>
+    </section>
+
     <!-- LEADS -->
-    <section id="view-leads" class="view">
+    <section id="view-leads" class="view" data-app="connect">
       <header class="page-head">
         <div><h1>Leads</h1><p class="muted">Everyone collected from your lists and what happened to them.</p></div>
-        <div class="row gap"><button class="btn" id="btnResetFailed" title="Only if you want to: put leads skipped because of an error back in the queue (email-required ones stay skipped)">↺ Retry error skips</button><a class="btn" href="/api/leads/export.csv">⬇ Export CSV</a></div>
+        <div class="row gap"><button class="btn" id="btnPhotos" title="Read the list's Sales Navigator pages again to fill in missing profile pictures (adds no leads)">Refresh photos</button><button class="btn" id="btnResetFailed" title="Only if you want to: put leads skipped because of an error back in the queue (email-required ones stay skipped)">Retry error skips</button><a class="btn" href="/api/leads/export.csv">Export CSV</a></div>
       </header>
-      <div class="filters row gap wrap">
-        <input id="fQ" placeholder="Search name, company, title..." />
+      <div class="pr-tabs">
+        <div class="pr-tablist" id="leadTabs">
+          <button data-st="" class="on">All <span></span></button>
+          <button data-st="review" title="New from sync – approve who the bot may send a note to">To review <span></span></button>
+          <button data-st="pending" title="Approved, waiting to be sent">Approved <span></span></button>
+          <button data-st="awaiting" title="Note sent, not accepted yet">Sent <span></span></button>
+          <button data-st="accepted">Accepted <span></span></button>
+          <button data-st="skipped" title="Skipped, already connected, invite already pending, failed">Skipped <span></span></button>
+          <button data-st="excluded" title="You chose: never contact">Excluded <span></span></button>
+        </div>
+      </div>
+      <div class="lead-toolbar">
+        <label class="pr-search"><span class="search-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><input id="fQ" placeholder="Search name, company, title, location…" /></label>
         <select id="fList"><option value="">All lists</option></select>
-        <select id="fStatus">
-          <option value="">All statuses</option>
-          <option value="pending">Pending</option><option value="sent">Sent</option>
-          <option value="skipped">Skipped</option><option value="already_connected">Already connected</option>
-          <option value="pending_invite">Invite already pending</option><option value="failed">Failed</option>
-          <option value="accepted">✓ Accepted</option><option value="awaiting">Sent – not accepted yet</option>
+        <select id="fSort" title="Order">
+          <option value="status">Order: to do first (To review → Approved → Sent → Accepted → Skipped)</option>
+          <option value="name">Order: name A–Z</option>
+          <option value="company">Order: company A–Z</option>
+          <option value="sent">Order: newest note sent</option>
+          <option value="recent">Order: latest activity</option>
         </select>
       </div>
-      <div class="card p0"><table class="tbl" id="leadsTbl"></table></div>
+      <div class="review-bar hidden" id="reviewBar">
+        <span id="reviewInfo"></span>
+        <div class="row gap"><button class="btn sm" id="btnExcludeSel" disabled>Don't contact selected</button><button class="btn sm primary" id="btnApproveSel" disabled>Approve selected</button><button class="btn sm" id="btnApproveAll">Approve all to review</button></div>
+      </div>
+      <div class="card p0 lead-wrap"><table class="tbl lead-tbl" id="leadsTbl"></table></div>
       <div class="row between mt"><span class="muted" id="leadsCount"></span><div class="row gap"><button class="btn sm" id="pgPrev">‹ Prev</button><button class="btn sm" id="pgNext">Next ›</button></div></div>
+    </section>
+
+    <!-- PROSPECTS -->
+    <section id="view-prospects" class="view" data-app="finder">
+      <header class="page-head">
+        <div><h1>Prospects</h1><p class="muted" id="prSub">People and companies on LinkedIn that need lead generation, outreach or email marketing help.</p></div>
+        <div class="row gap"><button class="btn" id="btnCv" title="Add a CV – the bot finds jobs and posts that match it (you can keep several)">Add CV</button><input type="file" id="cvFile" accept=".pdf,.docx,.txt,.md,.rtf" hidden /><a class="btn" href="/list" target="_blank" rel="noopener">Open list</a><a class="btn" id="btnExportProspects" href="/api/prospects/export.csv">Export CSV</a><button class="btn primary" id="btnFindProspects">Run now</button></div>
+      </header>
+
+      <div id="prRun" class="pr-run hidden"></div>
+      <div id="cvBox" class="cv-box hidden"></div>
+
+      <div class="pr-stats" id="prStats"></div>
+
+      <div class="pr-tabs">
+        <div class="pr-tablist" id="prTabs">
+          <button data-tab="post" class="on">Posts <span></span></button>
+          <button data-tab="job">Jobs <span></span></button>
+          <button data-tab="rejected" title="Everything the checks dropped, with the reason">Filtered out <span></span></button>
+          <button data-tab="searches" title="Your saved searches and filters">Searches <span></span></button>
+        </div>
+        <div class="row gap">
+          <select id="prSortSel" title="Order"><option value="score">Best first</option><option value="new">Newest first</option></select>
+          <select id="prStatusSel" title="Show">
+            <option value="new">New</option>
+            <option value="followup">Follow-ups due</option>
+            <option value="contacted">Contacted</option>
+            <option value="replied">Replied</option>
+            <option value="meeting">Meeting</option>
+            <option value="client">Client</option>
+            <option value="not_relevant">Skipped</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pr-toolbar" id="prToolbar">
+        <label class="pr-search"><span class="search-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><input id="prQ" placeholder="Search name, company or keyword" /></label>
+        <div class="pr-chips" id="prChips"></div>
+      </div>
+
+      <div class="pr-keys">Keys: <kbd>J</kbd>/<kbd>K</kbd> next / previous · <kbd>O</kbd> open · <kbd>C</kbd> contacted · <kbd>S</kbd> skip · <kbd>N</kbd> note · <kbd>B</kbd> not a fit</div>
+      <div id="prBody"></div>
+      <div class="row between mt"><span class="muted" id="prCount"></span><div class="row gap"><button class="btn sm" id="prPrev">‹ Prev</button><button class="btn sm" id="prNext">Next ›</button></div></div>
+
+    </section>
+
+    <section id="view-jobs" class="view" data-app="jobs">
+      <header class="page-head">
+        <div><h1>Job applications</h1><p class="muted">Remote Easy Apply jobs that fit your CV, applied with the resume on your LinkedIn. Questions the bot can't answer wait here for you.</p></div>
+        <div class="row gap"><button class="btn" id="btnJobsTest" title="Fills the forms of 3 jobs but never presses Submit">Test run</button><button class="btn danger" id="btnJobsStop" title="Stops applying. Nothing starts by itself until you press Apply now.">Stop</button><button class="btn primary" id="btnJobsRun">Apply now</button></div>
+      </header>
+      <form class="card jobs-search" id="jobsSearch">
+        <div class="row between"><h3>What to search for</h3><span class="sub">remote · Easy Apply · posted in the last 30 days</span></div>
+        <div class="jobs-search-tabs" id="jobsSearchTabs"></div>
+        <div class="row gap jobs-search-name"><label>Search name<input type="text" id="jobsSearchName" maxlength="60" /></label><button class="btn danger" type="button" id="jobsSearchDelete">Delete search</button></div>
+        <div class="jobs-search-grid">
+          <div class="jobs-search-field"><b>Keywords</b><div id="jobsKeywordsField"></div><small>Type one and press Enter · a job is kept only when its title has every word of one keyword</small></div>
+          <div class="jobs-search-field"><b>Regions</b><div id="jobsRegionsField"></div><small>Type one and press Enter · "Worldwide" = open to anyone</small></div>
+        </div>
+        <span class="sub" id="jobsSearchNote"></span>
+      </form>
+      <div id="jobsRun" class="jobs-run hidden"></div>
+      <div class="cards jobs-stats" id="jobsStats"></div>
+      <div id="jobsQuestions"></div>
+      <div class="pr-tabs">
+        <div class="pr-tablist" id="jobsTabs">
+          <button data-tab="applied" class="on">Applied <span></span></button>
+          <button data-tab="queued" title="Found and waiting for the next run">Waiting <span></span></button>
+          <button data-tab="needs_answers">Needs answers <span></span></button>
+          <button data-tab="skipped" title="Jobs the checks dropped or that could not be applied to">Skipped <span></span></button>
+        </div>
+      </div>
+      <div class="card p0"><table class="tbl" id="jobsTbl"></table></div>
     </section>
 
     <!-- SETTINGS -->
@@ -127,7 +258,7 @@
         <div><h1>Settings</h1><p class="muted">All automation numbers. Changes apply immediately – even during a running session.</p></div>
       </header>
       <form id="settingsForm" class="card settings">
-        <fieldset>
+        <fieldset data-app="connect">
           <legend>Delays</legend>
           <p class="muted">A random wait between <b>min</b> and <b>max</b> seconds after every invitation.</p>
           <div class="row gap">
@@ -152,10 +283,10 @@
             <label>Skip pause max (sec)<input type="number" name="skip_delay_max" min="0" /></label>
           </div>
         </fieldset>
-        <fieldset>
-          <legend>Safety limits</legend>
+        <fieldset data-app="connect">
+          <legend>Account safety</legend>
           <div class="row gap">
-            <label>Daily limit<input type="number" name="daily_limit" min="1" max="100" /><small>max 100 per day – split equally between active lists</small></label>
+            <label>Daily limit<input type="number" name="daily_limit" min="1" max="100" /><small>max 100 per day for all lists together – resets at midnight. A list with its own daily limit gets that; the others split the rest equally</small></label>
             <label>Per-run limit<input type="number" name="run_limit" min="1" /><small>max invites per Start click</small></label>
           </div>
           <div class="row gap">
@@ -163,11 +294,29 @@
 
           </div>
           <div class="row gap">
-            <label>Check acceptances every (hours)<input type="number" name="acceptance_check_hours" min="0" /><small>while idle · also runs after each run and during breaks · 0 = only those</small></label>
+            <label>Weekly limit<input type="number" name="weekly_limit" min="0" /><small>max invitations per week · your LinkedIn limit is ~200, keep a margin · 0 = off</small></label>
+            <label>Count the week<select name="weekly_window"><option value="monday">From Monday (LinkedIn resets then)</option><option value="rolling">Last 7 days</option></select></label>
+          </div>
+          <div class="row gap">
+            <label>Follow-ups per day<input type="number" name="followup_daily_limit" min="0" /><small>follow-up messages to people who accepted, all message types together · 0 = none</small></label>
+            <label>Chats into the CRM by themselves<select name="crm_inbox_auto"><option value="1">Yes – read the inbox every 30 min</option><option value="0">No – only with CRM → Add people</option></select><small>everyone who writes to you goes on the CRM board · a summary notification each evening (9 PM)</small></label>
+          </div>
+          <div class="row gap">
+            <label>Send only from (hour)<input type="number" name="work_hours_start" min="0" max="23" /><small>your local time · 0 and 24 = any time</small></label>
+            <label>until (hour)<input type="number" name="work_hours_end" min="1" max="24" /></label>
+            <label>Weekends<select name="skip_weekends"><option value="0">Send at weekends too</option><option value="1">No invitations Sat / Sun</option></select></label>
+          </div>
+          <div class="row gap">
+            <label>Max pending invitations<input type="number" name="max_pending" min="0" /><small>stop sending while this many (last 3 weeks) are not accepted yet · 0 = off</small></label>
+            <label>Warn below acceptance %<input type="number" name="min_acceptance_pct" min="0" max="100" /><small>LinkedIn flags accounts whose invites are ignored · 0 = off</small></label>
+          </div>
+          <div class="row gap">
+            <label>Quick acceptance check every (minutes)<input type="number" name="acceptance_poll_minutes" min="0" /><small>reads LinkedIn's "recently added" list in the background, no tab · also during campaigns · 0 = off</small></label>
+            <label>Full check every (hours)<input type="number" name="acceptance_check_hours" min="0" /><small>opens your Connections page (backup, while idle) · 0 = only after runs</small></label>
             <label>Recent connections to read<input type="number" name="acceptance_scan_max" min="50" /><small>per check (newest first)</small></label>
           </div>
         </fieldset>
-        <fieldset>
+        <fieldset data-app="connect">
           <legend>Behaviour</legend>
           <div class="row gap">
             <label>Page load wait (sec)<input type="number" name="page_load_wait" min="1" /><small>increase on slow internet</small></label>
@@ -180,6 +329,90 @@
             <label class="switch-row">Test mode (dry run)
               <select name="dry_run"><option value="0">Off – really send</option><option value="1">On – fill note but don't click Send</option></select>
             </label>
+          </div>
+        </fieldset>
+        <fieldset data-app="finder">
+          <legend>Where to look</legend>
+          <div class="row gap">
+            <label class="wide">Never these countries / regions<input type="text" name="prospect_blocked" />
+              <small>posts and jobs · regions: Africa, Asia (= South / East / Southeast / Central Asia, Middle East) · e.g. "Pakistan, India, Africa, Asia"</small></label>
+          </div>
+          <div class="row gap">
+            <label class="wide">Never keep jobs in<input type="text" name="prospect_job_blocked" /><small>only jobs – posts from these countries are still kept · e.g. "United Kingdom, United States, Canada"</small></label>
+          </div>
+        </fieldset>
+        <fieldset data-app="finder">
+          <legend>Job rules</legend>
+          <div class="row gap">
+            <label class="wide">Extra job titles / skills (from your CV)<input type="text" name="prospect_cv_keywords" />
+              <small>comma separated · filled in when you upload a CV; jobs and posts with these words are accepted too</small></label>
+          </div>
+        </fieldset>
+        <fieldset data-app="finder">
+          <legend>Limits</legend>
+          <div class="row gap">
+            <label>New posts per day<input type="number" name="prospect_daily_posts" min="0" /><small>the finder stops looking for posts once today's limit is reached · 0 = no limit</small></label>
+            <label>New jobs per day<input type="number" name="prospect_daily_jobs" min="0" /><small>the finder stops looking for jobs once today's limit is reached · 0 = no limit</small></label>
+          </div>
+          <div class="row gap">
+            <label class="switch-row">Check each post with Claude<select name="prospect_ai_check"><option value="1">On – Claude reads every post that passed the rules</option><option value="0">Off – keyword rules only</option></select><small>drops sellers, advice posts and coaches the rules miss · uses the Claude app on this Mac (your login) · ~15 sec per post</small></label>
+          </div>
+          <div class="row gap">
+            <label>Extra posts for today<input type="number" name="prospect_extra_posts" min="0" /><small>on top of the daily limit · today only, back to 0 tomorrow</small></label>
+            <label>Extra jobs for today<input type="number" name="prospect_extra_jobs" min="0" /><small>on top of the daily limit · today only, back to 0 tomorrow</small></label>
+          </div>
+          <div class="row gap">
+            <label>Profiles opened per day<input type="number" name="prospect_daily_profile_views" min="0" /><small>author profiles checked for location · protects your account · 0 = no limit</small></label>
+          </div>
+          <div class="row gap">
+            <label>Time on each profile – min (sec)<input type="number" name="prospect_profile_wait_min" min="0" /></label>
+            <label>– max (sec)<input type="number" name="prospect_profile_wait_max" min="0" /></label>
+          </div>
+        </fieldset>
+        <fieldset data-app="finder">
+          <legend>Daily run &amp; notifications</legend>
+          <div class="row gap">
+            <label>Run all ON searches every day at<input type="text" name="prospect_auto_run_at" placeholder="09:00" /><small>your time, 24 h · empty = only when you press Run now · a Mac notification tells you when it's done</small></label>
+            <label>Telegram bot token (optional)<input type="text" name="telegram_bot_token" placeholder="123456:ABC…" /><small>make a bot with @BotFather to get the new prospects on your phone</small></label>
+            <label>Telegram chat id<input type="text" name="telegram_chat_id" placeholder="e.g. 123456789" /><small>message your bot once, then ask @userinfobot for your id</small></label>
+          </div>
+        </fieldset>
+        <fieldset data-app="jobs">
+          <legend>Daily applying</legend>
+          <div class="row gap">
+            <label>Apply by itself every day<select name="jobs_auto"><option value="1">On</option><option value="0">Off – only when I press Apply now</option></select><small>applies by itself whenever no campaign is running, until today's applications are done</small></label>
+            <label>Start at<input type="text" name="jobs_run_at" placeholder="any time" /><small>empty = any time the bot is free · or a 24-hour time, e.g. 11:00</small></label>
+            <label>Applications per day<input type="number" name="jobs_daily" min="1" max="40" /><small>15–20 is a safe pace</small></label>
+          </div>
+          <div class="row gap">
+            <label>Wait between applications – min (seconds)<input type="number" name="jobs_wait_min" min="10" /></label>
+            <label>max (seconds)<input type="number" name="jobs_wait_max" min="10" /></label>
+          </div>
+        </fieldset>
+        <fieldset data-app="jobs">
+          <legend>Which jobs</legend>
+          <div class="row gap">
+            <p class="muted small">Keywords and regions are set on the Applications page.</p>
+          </div>
+          <div class="row gap">
+            <label>Remote jobs in Pakistan<select name="jobs_pakistan"><option value="1">Yes – high paying only</option><option value="0">No</option></select></label>
+            <label>Minimum salary in Pakistan (PKR / month)<input type="number" name="jobs_pk_min_salary" min="0" /><small>Pakistani jobs that don't show a salary are skipped</small></label>
+            <label>Skip jobs asking more than (years)<input type="number" name="jobs_max_years" min="0" /></label>
+          </div>
+        </fieldset>
+        <fieldset data-app="jobs">
+          <legend>Form answers</legend>
+          <div class="row gap">
+            <label>Your years of experience<input type="number" name="jobs_years" min="0" /><small>answer to every "how many years of experience" question</small></label>
+            <label>Expected salary – Pakistan (PKR / month)<input type="number" name="jobs_salary_pk" min="0" /><small>for jobs in Pakistan</small></label>
+            <label>Expected salary – other jobs (USD / month)<input type="number" name="jobs_salary_usd" min="0" /><small>for every job outside Pakistan</small></label>
+          </div>
+          <p class="muted small">Every other question is answered once on the Applications page – the bot then uses that answer for all jobs.</p>
+        </fieldset>
+        <fieldset>
+          <legend>Safety pause (both apps)</legend>
+          <div class="row gap">
+            <label>Pause after a security check (hours)<input type="number" name="safety_cooldown_hours" min="1" /><small>if LinkedIn shows a security check, restriction or "too many requests", neither app runs for this long</small></label>
           </div>
         </fieldset>
         <div class="row gap"><button class="btn primary" type="submit">Save settings</button></div>
@@ -197,18 +430,68 @@
 
     <!-- GUIDE -->
     <section id="view-guide" class="view">
-      <header class="page-head"><div><h1>How it works</h1><p class="muted">The recorded manual workflow that this app repeats for you.</p></div></header>
+      <header class="page-head"><div><h1>How it works</h1><p class="muted">Everything the bot does, and where to change it – no code needed.</p></div></header>
+
       <div class="card guide">
+        <h3>Setup</h3>
+        <ul>
+          <li><b>Chrome + extension</b> – stay logged in to LinkedIn / Sales Navigator. The <i>LinkedIn Bot</i> extension must be ON (the dashboard shows <i>Extension connected</i>).</li>
+          <li><b>No extra window</b> – the bot works in a collapsed <b>"LinkedIn Bot" tab group</b> in your Chrome window. Its tabs open in the background, never take focus, and close when a job is done. A tab showing <code>linkedin.com/robots.txt</code> is the bot's working tab – a tiny page the bot reads LinkedIn from. Don't close it during a run (if you do, the bot opens a new one).</li>
+          <li>After an extension update: <code>chrome://extensions</code> → reload <i>LinkedIn Bot</i> once.</li>
+        </ul>
+      </div>
+
+      <div class="card guide mt" data-app="connect">
+        <h3>Connection campaigns</h3>
         <ol class="steps">
-          <li><b>Create a Message Type</b> – e.g. "Bookkeepers". Write the note. Use <code>{first_name}</code>, <code>{company}</code>, <code>{title}</code>. Separate alternative versions with a line containing <code>---</code>; one is picked at random. <code>[Hi|Hello]</code> picks one word at random.</li>
-          <li><b>Add a List</b> – open your Sales Navigator <i>Saved search</i> (or lead list), copy the URL from the address bar, paste it here and pick the message type.</li>
-          <li><b>Your own Chrome</b> – stay logged in to LinkedIn / Sales Navigator. The <i>LinkedIn Connect Bot</i> extension (badge shows <b>ON</b>) opens its <b>own Chrome window</b> and works only there, without taking focus – keep using your other tabs normally. Don't minimize or close the bot window during a run; extension icon → <i>Show bot window</i> brings it up.</li>
-          <li><b>Start sending</b> – for each lead the bot opens the LinkedIn profile, clicks <i>Connect</i> (or <i>More → Connect</i> for 3rd-degree), <i>Add a note</i>, pastes the personalised message and clicks <i>Send</i>. Then it waits your configured delay (default 30–50 s).</li>
-          <li>Already-connected and already-invited people are skipped automatically and never contacted twice.</li>
+          <li><b>Message Types</b> – write the note. Use <code>{first_name}</code>, <code>{company}</code>, <code>{title}</code>. Separate alternative versions with a line containing <code>---</code> (one is picked at random); <code>[Hi|Hello]</code> picks one word at random.</li>
+          <li><b>Lists</b> – paste a Sales Navigator saved search / lead list URL, pick the message type, optionally target countries and a send limit. Turn the list <b>ON</b>.</li>
+          <li><b>Dashboard → Start sending</b> – for each lead the bot opens the profile, clicks <i>Connect</i> (when Connect is hidden under <i>More</i>, it opens LinkedIn's own invite page instead), adds your note and sends. Then it waits your delay (Settings → Delays) and takes a longer break every N invitations.</li>
+          <li><b>Skipped automatically</b>: already connected, invitation already pending, email required, outside the list's target countries. A browser problem (tab closed, extension reloaded) never skips a lead – it stays in the queue and is tried again.</li>
+          <li><b>Leads page</b> – tabs Pending / Sent / Accepted / Skipped / Excluded, search, list filter and order. <b>Don't contact</b> blocks a person for good (even after a new sync, in any list); <b>Undo</b> puts them back. <b>Delete</b> only deletes – the person may come back on the next sync.</li>
+          <li><b>Acceptances</b> – every 10 minutes the extension reads LinkedIn's "recently added connections" list in the background (no tab, also during campaigns), so the <i>Accepted</i> number goes up within minutes. <i>Check acceptances</i> on the dashboard checks right now. A full scan of your Connections page still runs every few hours as a backup (Settings).</li>
         </ol>
       </div>
-      <h3 class="mt">Recorded workflow screenshots</h3>
-      <div id="shots" class="shots"></div>
+
+      <div class="card guide mt">
+        <h3>Account safety (Settings → Account safety)</h3>
+        <ul>
+          <li><b>Daily limit</b>, <b>per-run limit</b> and <b>weekly limit</b> (counted from Monday, when LinkedIn resets) – the bot stops sending at the first one reached.</li>
+          <li><b>Max pending invitations</b> – no new invitations while too many are still waiting for an answer.</li>
+          <li><b>Low acceptance warning</b> – shown on the dashboard when too few people accept.</li>
+          <li><b>Security check / restriction / "too many requests"</b> – if LinkedIn shows a checkpoint, captcha or restriction page, the bot stops everything, turns campaigns OFF and pauses for the hours you set. Open LinkedIn yourself, solve any check, then press <i>clear</i> on the dashboard.</li>
+          <li><b>Sending hours</b> and <b>weekends</b> – optional; 0–24 = any time.</li>
+          <li>The dashboard strip shows this week's count, pending invitations, acceptance rate and today's profile visits.</li>
+          <li>Lists are <b>Active</b> or <b>Paused</b> – only you change that, the bot never pauses a list. Each list's daily limit and the overall daily limit reset at midnight.</li>
+          <li>If LinkedIn's own weekly limit is hit, sending goes on hold for the whole account (lists stay Active). The hold clears itself on Monday, or press <i>Resume sending</i>.</li>
+        </ul>
+      </div>
+
+      <div class="card guide mt" data-app="finder">
+        <h3>Prospect finder</h3>
+        <ul>
+          <li><b>Searches tab → + Job search / + Post search</b> – build searches with filters, like Sales Navigator / Apollo. Each search is saved; every search that is <b>ON</b> runs when you press <b>Run now</b>, or press <b>Run</b> on one. <b>Copy</b> makes a variant, <b>Edit</b> changes it.</li>
+          <li><b>Job search filters</b>: job titles × locations (each pair is one LinkedIn search), remote / hybrid / on-site, experience level, job type, posted (24 h / week), order, Easy Apply, fewer than 10 applicants, <i>where you can apply from</i> (anywhere in the world / anywhere in Europe / no rule), max years asked, skip jobs asking for another language, skip title words and companies, and switches for every rule (similar titles, SDR, senior roles, staffing companies, agency posts, non-sales roles, internships).</li>
+          <li><b>Post search filters</b>: keywords (exact phrase or any word), author job titles, where the author lives, kind of post (asking for help / hiring), hiring posts must be remote, order, posts per keyword, what the post must be about (your topics + built-in lead gen topics), skip words, skip author headlines, and switches for every rule (must ask for something, about the topic, written by the buyer, skip sellers / job seekers / recruiters / spam, English only).</li>
+          <li><b>Results</b>: Posts tab (each person with the sentence where they ask, highlighted), Jobs tab (table + why it passed), Filtered out (everything dropped, with the reason). Every result has a <b>score 0–100</b> (clear ask, new post, decision maker) – <i>Best first</i> shows the strongest on top. <b>Open list</b> gives a plain list of names, companies and links; <b>Export CSV</b> downloads it.</li>
+          <li><b>Small CRM</b>: give each prospect a status – New → Contacted → Replied → Meeting → Client (or Skipped) – add <b>notes</b> and a <b>follow-up date</b>; <i>Follow-ups due</i> lists who to contact today.</li>
+          <li><b>Send connection note</b> on a post sends that person a note with one of your Message Types – through the same bot, limits and checks as a campaign, never twice to the same person.</li>
+          <li><b>Not a fit</b> on a wrong result skips it and teaches its search: pick words from the author's headline (or the job title) and the search skips them from now on.</li>
+          <li><b>Keyboard</b>: J / K next / previous, O open, C contacted, S skip, N note, B not a fit.</li>
+          <li><b>Every day by itself</b>: Settings → Prospect finder → <i>Run all ON searches every day at</i> (e.g. 09:00). You get a Mac notification when it's done – and the list on Telegram if you add a bot token and chat id.</li>
+          <li>Global rules for all searches are in <b>Settings → Prospect finder</b>: blocked countries, target countries, daily limits, max experience. <b>Upload CV</b> creates searches from the skills in your CV.</li>
+          <li>The bot reads LinkedIn in the background (no scrolling, no window). A run with many searches takes a while – the bar on top shows <i>Search 12 of 96</i>, and the running search is marked <i>● Running now</i>.</li>
+        </ul>
+      </div>
+
+      <div class="card guide mt">
+        <h3>If something looks wrong</h3>
+        <ul>
+          <li><b>Extension not connected</b> – open Chrome, check the extension is ON, reload it once.</li>
+          <li><b>Many leads skipped with an error</b> – Leads → Skipped tab → <i>Retry error skips</i> (top right).</li>
+          <li><b>Activity Log</b> shows every step with the reason; page details for odd cases are saved in <code>app/data/debug</code>.</li>
+        </ul>
+      </div>
     </section>
   </main>
 

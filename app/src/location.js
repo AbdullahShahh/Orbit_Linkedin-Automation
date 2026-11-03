@@ -26,8 +26,52 @@ const CA_PROVINCES = [
   'new brunswick', 'newfoundland and labrador', 'newfoundland', 'prince edward island', 'yukon', 'northwest territories', 'nunavut',
 ];
 
+// States / counties / regions LinkedIn shows without a country ("Basingstoke, Hampshire", "Hannover, Lower Saxony")
+const STATE_COUNTRY = {
+  'united kingdom': ['hampshire', 'kent', 'surrey', 'essex', 'sussex', 'east sussex', 'west sussex', 'berkshire', 'buckinghamshire',
+    'hertfordshire', 'oxfordshire', 'cambridgeshire', 'norfolk', 'suffolk', 'devon', 'cornwall', 'dorset', 'somerset', 'wiltshire',
+    'gloucestershire', 'yorkshire', 'north yorkshire', 'west yorkshire', 'south yorkshire', 'lancashire', 'greater manchester',
+    'merseyside', 'cheshire', 'west midlands', 'east midlands', 'staffordshire', 'warwickshire', 'leicestershire', 'nottinghamshire',
+    'derbyshire', 'lincolnshire', 'northamptonshire', 'bedfordshire', 'tyne and wear', 'county durham', 'northumberland', 'cumbria',
+    'worcestershire', 'shropshire', 'herefordshire', 'greater london', 'midlothian', 'lanarkshire', 'county antrim'],
+  germany: ['bavaria', 'bayern', 'lower saxony', 'niedersachsen', 'north rhine-westphalia', 'nordrhein-westfalen', 'baden-wurttemberg',
+    'baden-württemberg', 'hesse', 'hessen', 'saxony', 'sachsen', 'rhineland-palatinate', 'schleswig-holstein', 'brandenburg',
+    'thuringia', 'saxony-anhalt', 'mecklenburg-vorpommern', 'saarland'],
+  netherlands: ['north holland', 'south holland', 'noord-holland', 'zuid-holland', 'utrecht', 'north brabant', 'noord-brabant', 'gelderland', 'overijssel', 'groningen', 'friesland', 'limburg'],
+  spain: ['catalonia', 'cataluna', 'andalusia', 'andalucia', 'community of madrid', 'valencian community', 'basque country', 'galicia'],
+  france: ['ile-de-france', 'île-de-france', 'auvergne-rhone-alpes', 'provence-alpes-cote d\'azur', 'occitanie', 'nouvelle-aquitaine', 'hauts-de-france', 'grand est', 'brittany', 'bretagne'],
+  italy: ['lombardy', 'lombardia', 'lazio', 'piedmont', 'piemonte', 'veneto', 'emilia-romagna', 'tuscany', 'toscana', 'campania', 'sicily'],
+  australia: ['new south wales', 'queensland', 'western australia', 'south australia', 'tasmania', 'australian capital territory'],
+  ireland: ['county dublin', 'county cork', 'county galway', 'county limerick'],
+  // blocked countries – so these are always recognised
+  pakistan: ['sindh', 'khyber pakhtunkhwa', 'balochistan', 'islamabad capital territory', 'azad kashmir', 'gilgit-baltistan'],
+  india: ['punjab', 'maharashtra', 'karnataka', 'tamil nadu', 'gujarat', 'uttar pradesh', 'west bengal', 'telangana', 'kerala',
+    'rajasthan', 'haryana', 'madhya pradesh', 'bihar', 'odisha', 'andhra pradesh', 'national capital territory of delhi', 'uttarakhand', 'jharkhand', 'assam', 'goa'],
+  philippines: ['metro manila', 'national capital region', 'calabarzon', 'central visayas', 'davao region', 'central luzon'],
+  bangladesh: ['dhaka division', 'chittagong division', 'chattogram division'],
+  nigeria: ['lagos state', 'federal capital territory', 'rivers state', 'oyo state'],
+  kenya: ['nairobi county', 'mombasa county'],
+};
+
 // Metro / city names LinkedIn often shows without a country
 const CITY_COUNTRY = {
+  netherlands: ['amsterdam', 'rotterdam', 'the hague', 'eindhoven', 'utrecht'],
+  germany: ['berlin', 'munich', 'hamburg', 'frankfurt', 'cologne', 'dusseldorf', 'stuttgart', 'leipzig'],
+  ireland: ['dublin', 'cork', 'galway', 'limerick'],
+  denmark: ['copenhagen', 'aarhus', 'odense', 'aalborg'],
+  sweden: ['stockholm', 'gothenburg', 'malmo'],
+  finland: ['helsinki', 'espoo', 'tampere'],
+  norway: ['oslo', 'bergen', 'trondheim'],
+  belgium: ['brussels', 'antwerp', 'ghent'],
+  switzerland: ['zurich', 'geneva', 'basel', 'lausanne', 'bern'],
+  austria: ['vienna', 'graz', 'salzburg', 'linz'],
+  spain: ['madrid', 'barcelona', 'valencia', 'seville', 'malaga'],
+  portugal: ['lisbon', 'porto'],
+  poland: ['warsaw', 'krakow', 'wroclaw', 'gdansk', 'poznan'],
+  estonia: ['tallinn', 'tartu'],
+  'czech republic': ['prague', 'brno'],
+  france: ['paris', 'lyon', 'marseille'],
+  italy: ['milan', 'rome', 'turin'],
   'united states': [
     'new york city', 'nyc', 'los angeles', 'chicago', 'houston', 'phoenix', 'philadelphia', 'san antonio', 'san diego',
     'dallas', 'fort worth', 'dallas-fort worth', 'san jose', 'austin', 'jacksonville', 'columbus', 'charlotte',
@@ -50,11 +94,26 @@ const CITY_COUNTRY = {
   canada: ['toronto', 'montreal', 'montréal', 'vancouver', 'calgary', 'edmonton', 'ottawa', 'ottawa-gatineau', 'winnipeg', 'mississauga', 'halifax', 'gta'],
   'united kingdom': ['london', 'manchester', 'liverpool', 'leeds', 'glasgow', 'edinburgh', 'bristol', 'cardiff', 'belfast'],
   australia: ['sydney', 'melbourne', 'brisbane', 'perth', 'adelaide'],
-  india: ['delhi', 'new delhi', 'mumbai', 'bengaluru', 'bangalore', 'chennai', 'kolkata', 'pune', 'ahmedabad', 'gurgaon', 'gurugram', 'noida'],
-  pakistan: ['karachi', 'lahore', 'islamabad', 'rawalpindi', 'faisalabad'],
-  'united arab emirates': ['dubai', 'abu dhabi', 'sharjah'],
+  india: ['delhi', 'new delhi', 'mumbai', 'bengaluru', 'bangalore', 'chennai', 'kolkata', 'pune', 'ahmedabad', 'gurgaon', 'gurugram', 'noida',
+    'jaipur', 'lucknow', 'indore', 'kochi', 'chandigarh', 'surat', 'nagpur', 'coimbatore', 'mohali', 'vadodara', 'bhopal', 'thiruvananthapuram', 'visakhapatnam'],
+  pakistan: ['karachi', 'lahore', 'islamabad', 'rawalpindi', 'faisalabad', 'multan', 'peshawar', 'sialkot', 'gujranwala', 'quetta', 'hyderabad'],
+  'united arab emirates': ['dubai', 'abu dhabi', 'sharjah', 'ajman'],
   singapore: ['singapore'],
-  philippines: ['manila', 'cebu'],
+  philippines: ['manila', 'cebu', 'davao', 'makati', 'quezon city', 'taguig', 'pasig'],
+  bangladesh: ['dhaka', 'chittagong', 'chattogram'],
+  nigeria: ['lagos', 'abuja', 'ibadan', 'port harcourt'],
+  kenya: ['nairobi', 'mombasa'],
+  egypt: ['cairo', 'alexandria', 'giza'],
+  'south africa': ['johannesburg', 'cape town', 'durban', 'pretoria'],
+  ghana: ['accra', 'kumasi'],
+  vietnam: ['ho chi minh', 'hanoi', 'da nang'],
+  indonesia: ['jakarta', 'bandung', 'surabaya', 'bali'],
+  malaysia: ['kuala lumpur', 'penang', 'johor bahru'],
+  thailand: ['bangkok', 'chiang mai'],
+  'saudi arabia': ['riyadh', 'jeddah', 'dammam'],
+  qatar: ['doha'],
+  'sri lanka': ['colombo'],
+  nepal: ['kathmandu'],
 };
 
 // Other countries (names as LinkedIn writes them). "Georgia" is left out on purpose – it is read as the US state.
@@ -75,7 +134,31 @@ const COUNTRIES = [
   'south korea', 'korea', 'spain', 'sri lanka', 'sudan', 'sweden', 'switzerland', 'syria', 'taiwan', 'tajikistan',
   'tanzania', 'thailand', 'togo', 'trinidad and tobago', 'tunisia', 'turkey', 'türkiye', 'turkmenistan', 'uganda',
   'ukraine', 'uruguay', 'uzbekistan', 'venezuela', 'vietnam', 'yemen', 'zambia', 'zimbabwe',
+  "cote d'ivoire", 'turkiye', 'south sudan', 'eritrea', 'djibouti', 'chad', 'congo', 'democratic republic of the congo',
+  'equatorial guinea', 'cape verde', 'cabo verde', 'comoros', 'seychelles', 'lesotho', 'eswatini', 'guinea-bissau',
+  'mauritania', 'central african republic', 'sao tome and principe', 'timor-leste', 'north korea', 'macao',
 ];
+
+// Regions that can be blocked by name (Settings → "Don't target these countries / regions")
+const AFRICA = [
+  'algeria', 'angola', 'benin', 'botswana', 'burkina faso', 'burundi', 'cameroon', 'cape verde', 'cabo verde',
+  'central african republic', 'chad', 'comoros', 'congo', 'democratic republic of the congo', 'djibouti', 'egypt',
+  'equatorial guinea', 'eritrea', 'eswatini', 'ethiopia', 'gabon', 'gambia', 'ghana', 'guinea', 'guinea-bissau',
+  'ivory coast', "côte d'ivoire", "cote d'ivoire", 'kenya', 'lesotho', 'liberia', 'libya', 'madagascar', 'malawi', 'mali',
+  'mauritania', 'mauritius', 'morocco', 'mozambique', 'namibia', 'niger', 'nigeria', 'rwanda', 'sao tome and principe',
+  'senegal', 'seychelles', 'sierra leone', 'somalia', 'south africa', 'south sudan', 'sudan', 'tanzania', 'togo',
+  'tunisia', 'uganda', 'zambia', 'zimbabwe',
+];
+const REGIONS = {
+  africa: AFRICA,
+  'south asia': ['afghanistan', 'bangladesh', 'bhutan', 'india', 'maldives', 'nepal', 'pakistan', 'sri lanka'],
+  'east asia': ['china', 'hong kong', 'macau', 'macao', 'japan', 'mongolia', 'north korea', 'south korea', 'korea', 'taiwan'],
+  'southeast asia': ['brunei', 'cambodia', 'indonesia', 'laos', 'malaysia', 'myanmar', 'philippines', 'singapore', 'thailand', 'timor-leste', 'vietnam'],
+  'central asia': ['kazakhstan', 'kyrgyzstan', 'tajikistan', 'turkmenistan', 'uzbekistan'],
+  'middle east': ['bahrain', 'iran', 'iraq', 'israel', 'jordan', 'kuwait', 'lebanon', 'oman', 'palestine', 'qatar', 'saudi arabia',
+    'syria', 'turkey', 'türkiye', 'turkiye', 'united arab emirates', 'yemen', 'armenia', 'azerbaijan', 'cyprus'],
+};
+REGIONS.asia = [...REGIONS['south asia'], ...REGIONS['east asia'], ...REGIONS['southeast asia'], ...REGIONS['central asia'], ...REGIONS['middle east']];
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const has = (text, word) => new RegExp(`(^|[^\\p{L}])${esc(word)}([^\\p{L}]|$)`, 'iu').test(text);
@@ -89,7 +172,8 @@ function normalizeCountry(name = '') {
 
 /** Country (lower-case canonical) a location string points to, or null when unclear. */
 function countryOf(location = '') {
-  const loc = String(location).normalize('NFKC').toLowerCase().trim();
+  // accents removed, so "Islāmābād" reads as "islamabad"
+  const loc = String(location).normalize('NFD').replace(/\p{M}/gu, '').normalize('NFKC').toLowerCase().trim();
   if (!loc) return null;
   // 1. explicit country words, checked from the end ("…, Florida, United States")
   const parts = loc.split(',').map((p) => p.trim()).reverse();
@@ -103,8 +187,9 @@ function countryOf(location = '') {
   // 3. a country name anywhere in the text
   for (const [canon, list] of Object.entries(ALIASES)) if (list.filter((a) => a.length > 3).some((a) => has(loc, a))) return canon;
   for (const c of COUNTRIES) if (has(loc, c)) return c;
-  // 4. well-known metros / cities
+  // 4. well-known metros / cities, then states / counties / regions
   for (const [canon, cities] of Object.entries(CITY_COUNTRY)) if (cities.some((c) => has(loc, c))) return canon;
+  for (const [canon, states] of Object.entries(STATE_COUNTRY)) if (states.some((st) => has(loc, st))) return canon;
   return null;
 }
 
@@ -123,4 +208,52 @@ function checkLocation(location, allowed, skipUnclear) {
   return { ok: false, reason: `lives outside the target countries (${location})` };
 }
 
-module.exports = { countryOf, checkLocation, parseCountries, normalizeCountry };
+/** Countries named in a block setting like "Pakistan, India, Africa, Asia" (regions expand to their countries). */
+function blockedCountries(str = '') {
+  const out = new Set();
+  for (const name of parseCountries(str)) for (const c of REGIONS[name] || [name]) out.add(c);
+  return out;
+}
+
+/**
+ * Is a location in a blocked country / region?
+ * { ok: true, country } | { ok: false, reason, unclear? } – unclear locations are NOT ok (we can't prove they're allowed).
+ */
+function checkBlocked(location, blocked) {
+  const set = blockedCountries(blocked);
+  const c = countryOf(location);
+  if (!c) return { ok: false, unclear: true, reason: `location unclear ("${location || 'not shown'}")` };
+  if (set.has(c)) return { ok: false, country: c, reason: `in a blocked country (${location})` };
+  return { ok: true, country: c };
+}
+
+// Names that are also common first names / words – not used when scanning free text
+const AMBIGUOUS_IN_TEXT = new Set(['chad', 'jordan', 'georgia', 'turkey', 'guinea', 'niger', 'mali', 'oman', 'columbia', 'jackson', 'mobile', 'naples', 'hyderabad']);
+
+/** First blocked country (or one of its big cities) mentioned anywhere in a text, else null. */
+function mentionsBlocked(text, blocked) {
+  const t = String(text || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  for (const c of blockedCountries(blocked)) {
+    if (!AMBIGUOUS_IN_TEXT.has(c) && has(t, c)) return c;
+    for (const city of CITY_COUNTRY[c] || []) if (!AMBIGUOUS_IN_TEXT.has(city) && has(t, city)) return c;
+  }
+  return null;
+}
+
+const EUROPE = ['albania', 'andorra', 'austria', 'belarus', 'belgium', 'bosnia and herzegovina', 'bulgaria', 'croatia', 'cyprus',
+  'czechia', 'czech republic', 'denmark', 'estonia', 'finland', 'france', 'germany', 'greece', 'hungary', 'iceland', 'ireland',
+  'italy', 'latvia', 'lithuania', 'luxembourg', 'malta', 'moldova', 'monaco', 'montenegro', 'netherlands', 'north macedonia',
+  'norway', 'poland', 'portugal', 'romania', 'serbia', 'slovakia', 'slovenia', 'spain', 'sweden', 'switzerland', 'ukraine', 'united kingdom'];
+
+REGIONS.europe = EUROPE;
+
+/** Is a location inside the target countries / regions ("Europe", "Germany, Ireland")? Empty target = anywhere. */
+function checkTarget(location, target) {
+  const want = blockedCountries(target);
+  if (!want.size) return { ok: true };
+  const c = countryOf(location);
+  if (!c) return { ok: false, unclear: true, reason: `location unclear ("${location || 'not shown'}")` };
+  return want.has(c) ? { ok: true, country: c } : { ok: false, reason: `outside your target regions (${c})` };
+}
+
+module.exports = { checkTarget, countryOf, checkLocation, parseCountries, normalizeCountry, checkBlocked, blockedCountries, mentionsBlocked, REGIONS, EUROPE };
