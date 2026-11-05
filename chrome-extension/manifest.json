@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Bot",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "Runs your LinkedIn outreach (connection notes, follow-ups, prospect finder) in your own logged-in Chrome. Controlled by the local dashboard (localhost).",
   "minimum_chrome_version": "116",
   "permissions": ["tabs", "tabGroups", "scripting", "storage", "alarms", "cookies"],

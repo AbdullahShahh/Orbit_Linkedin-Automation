@@ -2123,6 +2123,11 @@ loaders.settings = guard(async () => {
   SETTINGS = await api('/api/settings');
   const f = $('#settingsForm');
   for (const [k, v] of Object.entries(SETTINGS)) if (f.elements[k]) f.elements[k].value = v;
+  if (APP === 'jobs') $('#jobsCv').value = (await api('/api/jobs/cv')).text;
+});
+$('#btnJobsCvSave').onclick = guard(async () => {
+  await api('/api/jobs/cv', { method: 'PUT', body: { text: $('#jobsCv').value } });
+  toast('CV saved');
 });
 $('#settingsForm').onsubmit = guard(async (e) => {
   e.preventDefault();

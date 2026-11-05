@@ -901,7 +901,7 @@
     return t || (i.getAttribute('aria-label') || '').trim() || i.value;
   }
   const FILE_NAME = /[^\s/\\]{1,120}\.(pdf|docx?)\b/i;
-  // the box around one radio that names its file ("Abdullah_Shah_BD.pdf") – new UI, no class names to go by
+  // the box around one radio that names its file ("My_CV.pdf") – new UI, no class names to go by
   function fileBox(input) {
     let e = input;
     for (let i = 0; i < 5 && e.parentElement; i++) {
@@ -1048,20 +1048,23 @@
   function answerFor(f, ctx) {
     const l = f.label.toLowerCase();
     const topic = topicOf(f.label);
-    // expected salary: PKR for Pakistani jobs, USD for the rest (a number when the box wants one)
+    // expected salary from Settings (a number when the box wants one)
     if (topic === 'salary_expected' && ctx.salary) {
       const numeric = f.kind === 'number' || /\bnumbers? only\b|\bnumeric\b|\bwhole number\b/.test(l) || f.el && /numeric/i.test(f.el.id || '');
       if (f.kind === 'select' || f.kind === 'radio') return ctx.salary.number;
       return numeric ? ctx.salary.number : ctx.salary.text;
     }
-    // where you live / your nationality: you live in Pakistan and are Pakistani – Yes for Pakistan, No for any other country
+    // where you live / your nationality (Settings → About you): Yes for that country, No for any other.
+    // Not set: the question waits for your answer.
+    const me = ctx.profile || {};
+    const named = (v) => !!v && new RegExp(`\\b${v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(l);
     const home = /\b(located|based|living|live|resid\w*|currently in|reside)\b|\b(citizen\w*|national(ity)?|passport|hold (a|an)\b)/;
-    if (home.test(l) && !/\b(authori[sz]ed|eligible|permit|visa|sponsor|willing|relocat|commut|open to)\b/.test(l) && !/^what|^which|^where|^in which/.test(l) && /\?|\b(are|do|is) you\b/.test(l)) {
-      const yes = /pakistan/.test(l) || /\b(where you (are )?(located|based|live)|your (current )?(country|location))\b/.test(l);
+    if (me.country && home.test(l) && !/\b(authori[sz]ed|eligible|permit|visa|sponsor|willing|relocat|commut|open to)\b/.test(l) && !/^what|^which|^where|^in which/.test(l) && /\?|\b(are|do|is) you\b/.test(l)) {
+      const yes = named(me.country) || named(me.nationality) || /\b(where you (are )?(located|based|live)|your (current )?(country|location))\b/.test(l);
       return yes ? 'Yes' : 'No';
     }
-    if (/^(what|which) (country|nationality)|^what('s| is) your (nationality|citizenship|country)|^(country of )?(citizenship|nationality|residence)\b|^(where|in which country) (are you|do you)/.test(l)) {
-      return /national|citizen/.test(l) ? 'Pakistani|Pakistan' : 'Pakistan';
+    if (me.country && /^(what|which) (country|nationality)|^what('s| is) your (nationality|citizenship|country)|^(country of )?(citizenship|nationality|residence)\b|^(where|in which country) (are you|do you)/.test(l)) {
+      return /national|citizen/.test(l) ? [me.nationality, me.country].filter(Boolean).join('|') : me.country;
     }
     // start date / notice period: immediately – a date box gets the nearest working day, a number box 0 days
     if (topic === 'notice' || /\bstart date\b|\bdate (you can|of) (start|join)|\bjoining date\b|\bnotice\b/.test(l)) {
@@ -1105,7 +1108,7 @@
       const k = Object.keys(ctx.answers).find((x) => /\blocation\b|\bcity\b/.test(x) && ctx.answers[x]);
       if (k) return ctx.answers[k];
     }
-    if (/how many (years|yrs)|years of (work |professional |relevant )?experience|(years|yrs)\b.*\bexperience|experience\b.*\b(years|yrs)/.test(l)) return String(ctx.years);
+    if (/how many (years|yrs)|years of (work |professional |relevant )?experience|(years|yrs)\b.*\bexperience|experience\b.*\b(years|yrs)/.test(l) && ctx.years) return String(ctx.years);
     if (/\bremote(ly)?\b/.test(l) && /comfortable|willing|open to|able to|okay|ok with|happy to/.test(l)) return 'Yes';
     if (/english/.test(l) && /proficien|level|fluen|speak|communicat/.test(l)) return f.kind === 'text' || f.kind === 'textarea' ? 'Fluent' : 'Native or bilingual|Fluent|Full professional|Professional|Advanced|Yes';
     if (f.kind === 'check' && /\b(agree|acknowledge|consent|certify|confirm|terms|privacy)\b/.test(l)) return 'Yes';
@@ -1231,7 +1234,7 @@
     return r;
   }
   async function easyApplySteps(opts) {
-    const ctx = { answers: opts.answers || {}, saved: opts.saved || [], years: opts.years || 4, salary: opts.salary || null };
+    const ctx = { answers: opts.answers || {}, saved: opts.saved || [], years: opts.years || 0, profile: opts.profile || null, salary: opts.salary || null };
     const trace = [];
     let resume = null;
     await waitFor('main, body', 15000);
@@ -1425,5 +1428,5 @@
     return { jobs: [...out.values()], seen: ids().size, url: location.href };
   }
 
-  window.__lcb = { v: 95, jobSearchPage, jobState, easyApply, openMessage, readThread, readInbox, inboxReplies, sendInThread, apiGet, securityCheck, postSearchStart, postSearchPage, fetchPost, fetchJobPage, fetchJob, readProfile, readCompany, scrapeConnections, snapshot, waitFor, scrollResults, extractLeads, goNextPage, findProfileUrl, openInvite, fillInvite, isLoggedIn };
+  window.__lcb = { v: 96, jobSearchPage, jobState, easyApply, openMessage, readThread, readInbox, inboxReplies, sendInThread, apiGet, securityCheck, postSearchStart, postSearchPage, fetchPost, fetchJobPage, fetchJob, readProfile, readCompany, scrapeConnections, snapshot, waitFor, scrollResults, extractLeads, goNextPage, findProfileUrl, openInvite, fillInvite, isLoggedIn };
 })();

@@ -692,6 +692,7 @@ app.post('/api/pending/:id/dismiss', wrap((req) => pending.dismiss(req.params.id
 app.post('/api/pending/stop/:which', wrap((req) => pending.stopItem(req.params.which)));
 
 // ---------- Job applier ----------
+const { cvText, saveCv } = require('./jobs/aiAnswer');
 const parseJson = (t, d) => { try { return JSON.parse(t || ''); } catch { return d; } };
 app.get('/api/jobs', wrap((req) => {
   const status = String(req.query.status || 'applied');
@@ -788,6 +789,13 @@ app.get('/api/jobs/:id/trace', wrap((req) => {
   const r = db.prepare('SELECT trace FROM job_apps WHERE id = ?').get(Number(req.params.id));
   if (!r) throw bad('Job not found', 404);
   return parseJson(r.trace, null);
+}));
+// your CV as text: Claude uses it to answer form questions that have no saved answer
+app.get('/api/jobs/cv', wrap(() => ({ text: cvText() })));
+app.put('/api/jobs/cv', wrap((req) => {
+  const text = String(req.body.text || '').slice(0, 20000);
+  saveCv(text);
+  return { text };
 }));
 app.post('/api/jobs/run', wrap((req) => {
   if (runner.getStatus().status !== 'idle') throw bad('A campaign is running – start the job applier when it is done');

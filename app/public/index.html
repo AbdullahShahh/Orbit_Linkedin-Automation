@@ -378,6 +378,15 @@
           </div>
         </fieldset>
         <fieldset data-app="jobs">
+          <legend>About you</legend>
+          <div class="row gap">
+            <label>Country you live in<input type="text" name="profile_country" placeholder="e.g. Germany" /><small>required – answers "where do you live" questions on job forms</small></label>
+            <label>Nationality<input type="text" name="profile_nationality" placeholder="e.g. German" /><small>answers nationality and citizenship questions</small></label>
+          </div>
+          <label class="wide">Your CV (plain text)<textarea id="jobsCv" rows="8" placeholder="Paste your CV here"></textarea><small>form questions without a saved answer are answered from this when Claude Code is installed on this computer; otherwise they wait for you</small></label>
+          <div class="row gap"><button class="btn" type="button" id="btnJobsCvSave">Save CV</button></div>
+        </fieldset>
+        <fieldset data-app="jobs">
           <legend>Daily applying</legend>
           <div class="row gap">
             <label>Apply by itself every day<select name="jobs_auto"><option value="1">On</option><option value="0">Off – only when I press Apply now</option></select><small>applies by itself whenever no campaign is running, until today's applications are done</small></label>

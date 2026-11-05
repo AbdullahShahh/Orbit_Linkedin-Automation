@@ -120,13 +120,13 @@ const DEFAULT_SETTINGS = {
   followup_auto: 1,         // 1 = the bot sends follow-ups by itself when they are due (no Start needed)
   crm_inbox_auto: 1,        // 1 = every 30 min (while idle) the bot reads your inbox and puts everyone who wrote to you in the CRM
   prospect_daily_profile_views: 60, // prospect finder: max profiles opened per day; 0 = no limit
-  prospect_job_blocked: 'United Kingdom, United States, Canada', // jobs in these countries are never kept (posts still are)
+  prospect_job_blocked: '', // jobs in these countries are never kept (posts still are)
   prospect_auto_run_at: '',   // run all ON searches every day at this time ("09:00"); empty = off
   telegram_bot_token: '',     // optional: send the daily list to Telegram
   telegram_chat_id: '',
-  prospect_ai_check: 1,       // 1 = Claude reads each post that passed the rules and drops sellers / advice posts
-  prospect_blocked: 'Pakistan, India, Africa, Asia', // prospect finder: never keep people / jobs in these countries or regions
-  prospect_target: 'Europe',   // keep only people / jobs in these countries / regions (empty = anywhere not blocked)
+  prospect_ai_check: 0,       // 1 = Claude reads each post that passed the rules and drops sellers / advice posts
+  prospect_blocked: '', // prospect finder: never keep people / jobs in these countries or regions
+  prospect_target: '',   // keep only people / jobs in these countries / regions (empty = anywhere not blocked)
   prospect_cv_keywords: '',    // job titles / skills from the uploaded CV, accepted by the filters
   prospect_global_only: 'All countries', // jobs here must be remote + open to applicants worldwide
   prospect_max_experience: 5, // drop jobs that ask for more years of experience than this
@@ -141,21 +141,28 @@ const DEFAULT_SETTINGS = {
   jobs_auto: 0,               // 1 = apply by itself every day at jobs_run_at
   jobs_run_at: '11:00',       // daily start time
   jobs_daily: 18,             // applications per day
-  jobs_keywords: 'Business Development, Email Marketing, Outreach Specialist, Appointment Setter, Lead Generation, Cold Email',
-  jobs_regions: 'Worldwide, United Arab Emirates, Saudi Arabia, Qatar, Kuwait, Bahrain, Oman, Egypt, Jordan, Netherlands, Ireland, Portugal, Estonia, Malta, Cyprus, Luxembourg, Lithuania, Latvia, Slovenia, Croatia, Belgium, Denmark',
-  jobs_pakistan: 1,           // 1 = also remote jobs in Pakistan – only when the post shows a salary of at least jobs_pk_min_salary
-  jobs_pk_min_salary: 250000, // PKR per month
-  jobs_years: 4,              // answer to "how many years of experience" questions
-  jobs_salary_pk: 230000,     // expected monthly salary for jobs in Pakistan (PKR)
-  jobs_salary_usd: 950,       // expected monthly salary for every other job (USD)
+  jobs_keywords: '',
+  jobs_regions: '',
+  jobs_pakistan: 0,           // 1 = also remote jobs in Pakistan – only when the post shows a salary of at least jobs_pk_min_salary
+  jobs_pk_min_salary: 0, // PKR per month
+  jobs_years: 0,              // answer to "how many years of experience" questions
+  jobs_salary_pk: 0,     // expected monthly salary for jobs in Pakistan (PKR)
+  jobs_salary_usd: 0,       // expected monthly salary for every other job (USD)
   jobs_max_years: 6,          // skip jobs that ask for more years than this
   jobs_wait_min: 60,          // seconds between two applications
   jobs_wait_max: 150,
+  profile_country: '',        // the country you live in – answers "where do you live" questions on job forms
+  profile_nationality: '',    // e.g. Pakistani – answers nationality / citizenship questions
   jobs_searches: '',          // saved job searches (JSON: [{ id, name, keywords, regions }])
   jobs_search_active: 0,      // id of the one the bot runs; its keywords / regions are copied to jobs_keywords / jobs_regions
 };
 // Settings that hold text, not numbers
-const TEXT_SETTINGS = ['jobs_searches', 'jobs_run_at', 'jobs_keywords', 'jobs_regions','prospect_job_blocked', 'prospect_auto_run_at', 'telegram_bot_token', 'telegram_chat_id', 'weekly_window', 'prospect_blocked', 'prospect_target', 'prospect_global_only', 'prospect_cv_keywords', 'prospect_extra_date'];
+const TEXT_SETTINGS = ['profile_country', 'profile_nationality', 'jobs_searches', 'jobs_run_at', 'jobs_keywords', 'jobs_regions','prospect_job_blocked', 'prospect_auto_run_at', 'telegram_bot_token', 'telegram_chat_id', 'weekly_window', 'prospect_blocked', 'prospect_target', 'prospect_global_only', 'prospect_cv_keywords', 'prospect_extra_date'];
+
+// Installs from before the profile fields always answered as living in Pakistan: keep that
+if (db.prepare('SELECT COUNT(*) c FROM settings').get().c && !db.prepare("SELECT 1 FROM settings WHERE key = 'profile_country'").get()) {
+  db.prepare("INSERT INTO settings (key, value) VALUES ('profile_country', 'Pakistan'), ('profile_nationality', 'Pakistani')").run();
+}
 
 const insertDefault = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
 for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) insertDefault.run(k, String(v));
