@@ -22,6 +22,28 @@ class StopSignal extends Error {}
 async function checkpoint() {
   while (paused && !stopRequested) await new Promise((r) => setTimeout(r, 500));
   if (stopRequested) throw new StopSignal();
+  await followupsFirst();
+}
+
+// follow-ups come before prospect searches: when some are due, the search waits while the campaign bot
+// sends them (checked every 10 minutes). While the job applier runs it sends them itself.
+let followupCheckAt = 0;
+async function followupsFirst() {
+  if (Date.now() - followupCheckAt < 10 * 60000) return;
+  followupCheckAt = Date.now();
+  const runner = require('./runner');
+  const s = getSettings();
+  if (runner.getStatus().status !== 'idle' || require('./jobApplier').isBusy() || safety.cooldown() || !safety.inWorkingHours(s)) return;
+  if (runner.followupsToday() >= s.followup_daily_limit || !runner.dueFollowups().length) return;
+  logger.info('Follow-ups are due – sending them before the prospect search goes on');
+  const before = state.current;
+  state.current = { ...(before || {}), step: 'Waiting – due follow-ups are being sent first' };
+  publish();
+  try { await runner.run({ mode: 'followups' }); } catch (e) { logger.warn(`Follow-ups not started: ${e.message}`); return; }
+  while (runner.getStatus().status !== 'idle' && !stopRequested) await new Promise((r) => setTimeout(r, 2000));
+  if (stopRequested) throw new StopSignal();
+  state.current = before;
+  publish();
 }
 
 async function wait(seconds, reason) {
@@ -52,6 +74,7 @@ function start(searchIds = []) {
   if (!bridge.isConnected()) throw new Error('Chrome extension not connected. Open Chrome and make sure the "LinkedIn Bot" extension is enabled.');
   stopRequested = false;
   paused = false;
+  followupCheckAt = 0; // due follow-ups go out before the first search
   Object.assign(state, { status: 'running', current: null, wait: null, startedAt: new Date().toISOString() });
   publish();
   let awake = null;

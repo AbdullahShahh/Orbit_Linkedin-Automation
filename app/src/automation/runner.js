@@ -432,7 +432,15 @@ function dueFollowups() {
   const stepOf = db.prepare("SELECT * FROM message_followups WHERE type_id = ? AND step = ? AND active = 1 AND body <> ''");
   const now = Date.now();
   return rows.map((lead) => ({ lead, f: lead.ftype && stepOf.get(lead.ftype, lead.followup_step + 1) }))
-    .filter(({ lead, f }) => f && toMs(lead.followup_step ? lead.followup_at : lead.accepted_at) + f.delay_days * 864e5 <= now);
+    .filter(({ lead, f }) => f && dueDayMs(lead, f) <= now);
+}
+
+/** Follow-ups go by the date, not the hour: due from the start of the day its wait ends
+ *  (accepted on the 5th + 1 day = any time on the 6th) */
+function dueDayMs(lead, f) {
+  const d = new Date(toMs(lead.followup_step ? lead.followup_at : lead.accepted_at) + f.delay_days * 864e5);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
 }
 
 /** The next follow-up that will come due: { at: "YYYY-MM-DD HH:MM", name } or null */
@@ -445,10 +453,10 @@ function nextFollowup() {
   for (const lead of rows) {
     const f = lead.ftype && stepOf.get(lead.ftype, lead.followup_step + 1);
     if (!f) continue;
-    const at = toMs(lead.followup_step ? lead.followup_at : lead.accepted_at) + f.delay_days * 864e5;
+    const at = dueDayMs(lead, f);
     if (at > Date.now() && (!best || at < best.ms)) best = { ms: at, name: lead.name };
   }
-  return best && { at: new Date(best.ms).toLocaleString('sv-SE').slice(0, 16), name: best.name };
+  return best && { at: new Date(best.ms).toLocaleString('sv-SE').slice(0, 10), name: best.name };
 }
 
 const FOLLOWUP_FAIL = {

@@ -41,6 +41,26 @@ async function wait(seconds, reason) {
 }
 const step = (text, job) => { state.current = { step: text, job: job ? `${job.title} – ${job.company}` : '' }; publish(); };
 
+// follow-ups come before jobs: when some are due, the job applier waits while the campaign bot sends them
+// (checked every 10 minutes, so a long job search never holds them back)
+let followupCheckAt = 0;
+async function followupsFirst() {
+  if (Date.now() - followupCheckAt < 10 * 60000) return;
+  followupCheckAt = Date.now();
+  const runner = require('./runner');
+  const s = getSettings();
+  if (runner.getStatus().status !== 'idle' || safety.cooldown() || !safety.inWorkingHours(s)) return;
+  if (runner.followupsToday() >= s.followup_daily_limit || !runner.dueFollowups().length) return;
+  logger.info('Follow-ups are due – sending them before the next job');
+  const before = state.current;
+  step('Waiting – due follow-ups are being sent first');
+  try { await runner.run({ mode: 'followups' }); } catch (e) { logger.warn(`Follow-ups not started: ${e.message}`); return; }
+  while (runner.getStatus().status !== 'idle' && !stopRequested) await new Promise((r) => setTimeout(r, 2000));
+  if (stopRequested) throw new StopSignal();
+  state.current = before;
+  publish();
+}
+
 // ---------- which jobs ----------
 // a title fits only when it holds every word of one of YOUR keywords (Jobs page), in any order:
 // "Email Marketing" -> "Email Marketing Specialist", "Marketing (Email) Executive"
@@ -178,6 +198,7 @@ function updateSearch(s) {
 async function findJobs(need, s, search) {
   const found = [];
   while (search.pairs.length && found.length < need && search.reads < 200) {
+    await followupsFirst();
     const [keyword, region, start = 0] = search.pairs.shift();
     step(`Searching "${keyword}" in ${region}${start ? ` (page ${start / 10 + 1})` : ''}`);
     if (search.reads++) await wait(rand(3, 6), 'Next job search');
@@ -246,6 +267,7 @@ async function findJobs(need, s, search) {
 function salaryFor(job, s) {
   const pk = job.region === 'Pakistan' || /pakistan/i.test(job.location || '');
   const n = pk ? s.jobs_salary_pk : s.jobs_salary_usd;
+  if (!n) return null; // not set: the question waits for your answer
   return { number: String(n), text: `${Number(n).toLocaleString('en')} ${pk ? 'PKR' : 'USD'} per month`, currency: pk ? 'PKR' : 'USD' };
 }
 const savedAnswers = () => db.prepare("SELECT label, answer FROM job_answers WHERE answer != '' ORDER BY updated_at DESC").all();
@@ -308,7 +330,7 @@ async function applyOne(job, s, test, retry = false) {
   step(test ? 'Filling the form (test – no Submit)' : 'Applying with Easy Apply', job);
   let r;
   try {
-    r = (await bridge.call('exec', { tab: TAB, action: 'easyApply', args: [{ answers: answersMap(), saved: savedAnswers(), years: s.jobs_years, salary: salaryFor(job, s), submit: !test, title: job.title }] }, 240000)) || { status: 'failed', reason: 'the page did not answer' };
+    r = (await bridge.call('exec', { tab: TAB, action: 'easyApply', args: [{ answers: answersMap(), saved: savedAnswers(), years: s.jobs_years, profile: { country: s.profile_country, nationality: s.profile_nationality }, salary: salaryFor(job, s), submit: !test, title: job.title }] }, 240000)) || { status: 'failed', reason: 'the page did not answer' };
   } catch (e) {
     if (!/did not respond/i.test(e.message)) throw e;
     // Chrome froze the hidden tab in the middle of the form: try this job once more on a later run
@@ -380,8 +402,10 @@ function start({ test = false, reason = '', manual = false } = {}) {
   if (state.status !== 'idle') throw new Error('The job applier is already running');
   const cool = safety.cooldown();
   if (cool) throw new Error(`Paused for account safety until ${cool.until}: ${cool.reason}`);
-  if (!bridge.isConnected()) throw new Error('Chrome extension not connected. Open Chrome and make sure the "LinkedIn Bot" extension is enabled.');
   const s = getSettings();
+  if (!s.profile_country) throw new Error('Add the country you live in under Settings first – job forms ask for it');
+  newSearch(s); // keywords and regions must be set
+  if (!bridge.isConnected()) throw new Error('Chrome extension not connected. Open Chrome and make sure the "LinkedIn Bot" extension is enabled.');
   const target = test ? 3 : Math.max(0, s.jobs_daily - appliedToday());
   if (!target) throw new Error(`Today's ${s.jobs_daily} applications are done – more tomorrow`);
   if (manual && !test) setState('jobs_stopped', false);
@@ -422,6 +446,8 @@ function start({ test = false, reason = '', manual = false } = {}) {
         // found for another saved search: it stays waiting until that search is selected again
         if (!titleFits(job.title, search.keywords) || outsideRegions(job, search.regions)) continue;
         if (done++) { const w = getSettings(); await wait(rand(w.jobs_wait_min, w.jobs_wait_max), 'Next application'); }
+        followupCheckAt = 0; // before every application
+        await followupsFirst();
         const st = await applyOne(job, getSettings(), test);
         tally[st in tally ? st : 'other']++;
         if (st === 'limit') { logger.warn('LinkedIn says the Easy Apply limit for today is reached – applying again tomorrow'); break; }
