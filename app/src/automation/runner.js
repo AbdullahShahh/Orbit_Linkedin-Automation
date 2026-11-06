@@ -430,18 +430,15 @@ function dueFollowups() {
     WHERE d.status = 'sent' AND d.accepted_at IS NOT NULL AND d.replied_at IS NULL AND d.followup_state = ''
       AND d.followup_step < ? AND d.profile_url LIKE '%linkedin.com/in/%' ORDER BY d.accepted_at`).all(FOLLOWUP_STEPS);
   const stepOf = db.prepare("SELECT * FROM message_followups WHERE type_id = ? AND step = ? AND active = 1 AND body <> ''");
+  if (crm.isSunday()) return []; // no follow-ups on Sundays – they go out on Monday
   const now = Date.now();
   return rows.map((lead) => ({ lead, f: lead.ftype && stepOf.get(lead.ftype, lead.followup_step + 1) }))
     .filter(({ lead, f }) => f && dueDayMs(lead, f) <= now);
 }
 
-/** Follow-ups go by the date, not the hour: due from the start of the day its wait ends
- *  (accepted on the 5th + 1 day = any time on the 6th) */
-function dueDayMs(lead, f) {
-  const d = new Date(toMs(lead.followup_step ? lead.followup_at : lead.accepted_at) + f.delay_days * 864e5);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
+/** Follow-ups go by the date, not the hour, and never on a Sunday: due from the start of the day its wait ends
+ *  (accepted on the 5th + 1 day = any time on the 6th; a Sunday becomes the Monday) */
+const dueDayMs = (lead, f) => crm.followupDayMs(lead.followup_step ? lead.followup_at : lead.accepted_at, f.delay_days);
 
 /** The next follow-up that will come due: { at: "YYYY-MM-DD HH:MM", name } or null */
 function nextFollowup() {
@@ -453,7 +450,9 @@ function nextFollowup() {
   for (const lead of rows) {
     const f = lead.ftype && stepOf.get(lead.ftype, lead.followup_step + 1);
     if (!f) continue;
-    const at = dueDayMs(lead, f);
+    let at = dueDayMs(lead, f);
+    // on a Sunday the ones already due wait for Monday
+    if (crm.isSunday() && at <= Date.now()) { const d = new Date(); d.setHours(24, 0, 0, 0); at = d.getTime(); }
     if (at > Date.now() && (!best || at < best.ms)) best = { ms: at, name: lead.name };
   }
   return best && { at: new Date(best.ms).toLocaleString('sv-SE').slice(0, 10), name: best.name };
@@ -569,6 +568,7 @@ async function chatRun(items, { max = 0, dryRun = false, sending = true } = {}) 
     const s = { ...getSettings(), ...(dryRun ? { dry_run: 1 } : {}) };
     if (safety.cooldown()) break;
     if (!safety.inWorkingHours(s)) { logger.warn('Outside working hours – chats wait (Settings → Account safety)'); break; }
+    if (sending && crm.isSunday()) { logger.warn('It is Sunday – no follow-ups today, the rest go out on Monday'); break; }
     if (sending && !s.dry_run && followupsToday() >= s.followup_daily_limit) {
       logger.warn(`Follow-up limit of ${s.followup_daily_limit} per day reached – the rest go out tomorrow (Settings → Account safety)`);
       break;

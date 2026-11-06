@@ -57,6 +57,16 @@ const LEADS_SQL = `
 
 const stampOf = (ms) => new Date(ms).toLocaleString('sv-SE').slice(0, 16);
 
+// Follow-ups go by the date, not the hour, and never on a Sunday: the day a wait ends (from its start, 00:00);
+// a Sunday becomes the Monday. Never earlier than the wait.
+const isSunday = (d = new Date()) => d.getDay() === 0;
+function followupDayMs(base, delayDays) {
+  const d = new Date(toMs(base) + delayDays * 864e5);
+  d.setHours(0, 0, 0, 0);
+  if (isSunday(d)) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+
 /** Notes sent / accepted / replied for one campaign (or all), and the follow-up plan of its message type */
 function stats(listId) {
   const where = listId ? 'AND list_id = ?' : '';
@@ -85,7 +95,7 @@ function board({ listId, q } = {}) {
     // when the bot sends this person's next follow-up (only while follow-ups are still going on)
     const next = !d.replied_at && !d.followup_state && stepsOf(d.ftype).find((f) => f.step === d.followup_step + 1);
     const base = d.followup_step ? d.followup_at : d.accepted_at;
-    const next_followup = next && base ? { step: next.step, due: stampOf(toMs(base) + next.delay_days * 864e5) } : null;
+    const next_followup = next && base ? { step: next.step, due: stampOf(followupDayMs(base, next.delay_days)).slice(0, 10) } : null;
     stages[stage].push({ ...d, stage, stage_by: by, next_followup, added: d.status === 'crm' });
   }
   const counts = Object.fromEntries(STAGES.map((s) => [s, stages[s].length]));
@@ -300,4 +310,4 @@ function syncInbox(items) {
   return added;
 }
 
-module.exports = { STAGES, board, setStage, inbox, addContacts, removeContact, inboxNeedsReplies, syncInbox };
+module.exports = { isSunday, followupDayMs, STAGES, board, setStage, inbox, addContacts, removeContact, inboxNeedsReplies, syncInbox };

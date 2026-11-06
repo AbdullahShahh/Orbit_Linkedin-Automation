@@ -556,13 +556,14 @@ let crmTimer;
 // "Today 04:07", "Tomorrow 04:07", "Yesterday", "Oct 22" (and the year when it is not this year) – the full time is in the tooltip
 function niceDate(ts) {
   if (!ts) return '';
-  const d = new Date(String(ts).replace(' ', 'T'));
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(String(ts)); // a day without a time (follow-up due dates)
+  const d = new Date(dateOnly ? `${ts}T00:00` : String(ts).replace(' ', 'T'));
   if (Number.isNaN(d.getTime())) return String(ts);
-  const t = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const t = dateOnly ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 864e5);
-  if (days === 0) return `Today ${t}`;
+  if (days === 0) return `Today ${t}`.trim();
   if (days === 1) return 'Yesterday';
-  if (days === -1) return `Tomorrow ${t}`;
+  if (days === -1) return `Tomorrow ${t}`.trim();
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(d.getFullYear() !== new Date().getFullYear() ? { year: 'numeric' } : {}) });
 }
 
